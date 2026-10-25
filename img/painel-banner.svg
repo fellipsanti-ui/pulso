@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 330" role="img" aria-label="Colinas verdes com uma gota de água e a linha do batimento cardíaco">
+<defs><linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E1EDD8"/><stop offset="1" stop-color="#BFDDA9"/></linearGradient></defs>
+<rect width="720" height="330" fill="url(#fundo)"/>
+<circle cx="520" cy="110" r="64" fill="#FBE4A0"/>
+<path d="M0 230 Q160 160 330 215 T720 190 V330 H0Z" fill="#8CC56B"/>
+<path d="M0 268 Q200 210 380 258 T720 240 V330 H0Z" fill="#5E9E3E"/>
+<path d="M0 304 Q240 262 460 300 T720 286 V330 H0Z" fill="#437D29"/>
+<path d="M60 60 C60 60 36 92 36 108 a24 24 0 0 0 48 0 C84 92 60 60 60 60Z" fill="#8FC8EA"/>
+<path d="M60 90 C52 100 50 106 54 112" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity=".8"/>
+<polyline points="90,176 220,176 250,128 290,224 322,150 346,176 470,176" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+<g fill="#fff" opacity=".55"><path d="M640 52 q22 -6 30 14 q-22 6 -30 -14Z"/><path d="M600 84 q18 -8 28 8 q-18 8 -28 -8Z"/></g>
+</svg>

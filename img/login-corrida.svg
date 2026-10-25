@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Pessoa correndo numa pista cercada de árvores ao nascer do sol">
+<defs>
+<linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5A3B"/><stop offset=".5" stop-color="#6BAF48"/><stop offset="1" stop-color="#F6E3A8"/></linearGradient>
+<radialGradient id="brilho"><stop offset="0" stop-color="#FFE9A8" stop-opacity=".9"/><stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/></radialGradient>
+</defs>
+<rect width="800" height="450" fill="url(#ceu)"/>
+<circle cx="560" cy="255" r="150" fill="url(#brilho)"/>
+<circle cx="560" cy="255" r="62" fill="#FBD477"/>
+<path d="M0 300 Q140 228 290 288 T590 278 T800 262 V450 H0Z" fill="#437D29" opacity=".6"/>
+<path d="M0 345 Q200 292 400 332 T800 322 V450 H0Z" fill="#2F5A3B"/>
+<g stroke-linecap="round" fill="none">
+<path d="M92 392 Q98 330 104 268" stroke="#1F3D28" stroke-width="9"/>
+<path d="M104 268 Q64 244 36 272 M104 268 Q84 232 52 226 M104 268 Q126 230 160 232 M104 268 Q146 252 168 282" stroke="#1F3D28" stroke-width="8"/>
+<path d="M712 392 Q706 340 700 290" stroke="#1F3D28" stroke-width="9"/>
+<path d="M700 290 Q664 270 640 294 M700 290 Q682 256 654 252 M700 290 Q722 258 752 262 M700 290 Q738 278 758 304" stroke="#1F3D28" stroke-width="8"/>
+</g>
+<path d="M-20 428 Q300 352 830 396" stroke="#E7C79B" stroke-width="64" fill="none"/>
+<path d="M-20 428 Q300 352 830 396" stroke="#fff" stroke-width="3" stroke-dasharray="26 22" fill="none" opacity=".8"/>
+<g stroke="#F6F1E4" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none">
+<circle cx="404" cy="268" r="15" fill="#F6F1E4" stroke="none"/>
+<path d="M398 288 L380 332"/>
+<path d="M394 300 L416 312 L430 298"/>
+<path d="M392 302 L368 306 L356 324"/>
+<path d="M380 332 L408 352 L400 384"/>
+<path d="M380 332 L354 356 L330 346"/>
+</g>
+<g stroke="#F6F1E4" stroke-width="4" stroke-linecap="round" opacity=".7"><path d="M300 300 H340 M290 318 H330 M306 336 H336"/></g>
+</svg>

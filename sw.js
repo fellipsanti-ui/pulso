@@ -1,9 +1,10 @@
 /* ===== Pulso: service worker (faz o app abrir rápido e funcionar sem internet) =====
    Quando mudar qualquer arquivo do site, aumente o número da VERSAO (v1 -> v2).
    Isso faz os aparelhos baixarem a versão nova e apagarem a antiga. */
-const VERSAO = 'pulso-v1';
+const VERSAO = 'pulso-v2';
 const BASE = ['./', 'pag1.html', 'pag2.html', 'pag3.html', 'pag4.html', 'pag5.html',
-  'css/estilo.css', 'js/app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+  'css/estilo.css', 'js/app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
+  'img/login-corrida.svg', 'img/painel-banner.svg', 'img/recuperacao-alongamento.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSAO).then(c => c.addAll(BASE)).then(() => self.skipWaiting()));

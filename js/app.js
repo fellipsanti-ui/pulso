@@ -15,13 +15,14 @@ const CONFIG = {
   // Deixe false enquanto edita o site, para o navegador não guardar arquivos antigos.
   app: { serviceWorkerEmLocalhost: false },
 
+  // As imagens atuais são ilustrações. Para usar fotos ou vídeos, troque o caminho em src.
   // Fotos e vídeos do site: coloque o arquivo em img/ ou video/ e escreva o caminho em src (ex.: 'img/banner.jpg').
   // Com src vazio aparece um espaço reservado. mostrarVazios: false esconde os espaços ainda vazios.
   midias: {
     mostrarVazios: true,
-    'login-hero': { src: '', legenda: 'Foto ou vídeo de abertura' },
-    'painel-banner': { src: '', legenda: 'Foto do banner' },
-    'recuperacao-video': { src: '', poster: '', legenda: 'Vídeo de alongamento ou respiração' }
+    'login-hero': { src: 'img/login-corrida.svg', legenda: 'Pessoa correndo numa pista ao nascer do sol' },
+    'painel-banner': { src: 'img/painel-banner.svg', legenda: 'Colinas verdes com o batimento cardíaco' },
+    'recuperacao-video': { src: 'img/recuperacao-alongamento.svg', poster: '', legenda: 'Pessoa se alongando em casa' }
   },
   opcoes: {
     sexos: ['Feminino', 'Masculino', 'Prefiro não informar'],
