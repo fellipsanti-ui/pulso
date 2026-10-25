@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F0EC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Pulso – Painel</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script>/* tema salvo, ou o do aparelho; roda antes de desenhar para não piscar */
+try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso_tema')||'null')||(matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro')}catch(e){}
+</script>
+</head>
+<body>
+<header id="topo"></header>
+
+<main class="pagina">
+  <section class="saudacao">
+    <h1 id="ola"></h1>
+    <p class="sub" id="saudTxt" style="margin-bottom:0"></p>
+    <div class="meta" id="saudMeta" role="progressbar" aria-label="Meta da semana" aria-valuemin="0" aria-valuemax="100"><div id="saudBarra"></div></div>
+    <div class="midia" data-midia="painel-banner"></div>
+  </section>
+
+  <div class="aviso" id="avisoMedico" hidden>Pelas suas respostas, converse com um médico antes de começar ou intensificar os treinos.</div>
+
+  <div class="metricas">
+    <div class="metrica"><div class="cab"><span class="icone" style="--c:var(--azul)">🌙</span>Sono</div>
+      <div><b id="mSono">-</b><small id="mSonoSub"></small></div><div class="meta"><div id="bSono"></div></div></div>
+    <div class="metrica"><div class="cab"><span class="icone" style="--c:var(--azul)">💧</span>Água</div>
+      <div><b id="mAgua">-</b><small id="mAguaSub"></small></div><div class="meta"><div id="bAgua"></div></div></div>
+    <div class="metrica"><div class="cab"><span class="icone">🏃</span>Treinos na semana</div>
+      <div><b id="mTreinos">0</b><small id="mTreinosSub"></small></div><div class="meta"><div id="bTreinos"></div></div></div>
+    <div class="metrica"><div class="cab"><span class="icone" style="--c:var(--laranja)">🔥</span>Sequência</div>
+      <div><b id="mSeq">0</b><small id="mSeqSub"></small></div><div class="meta"><div id="bSeq"></div></div></div>
+  </div>
+
+  <div class="grade">
+    <section class="bloco" id="registrar">
+      <h2>Registrar treino</h2>
+      <form id="formTreino" novalidate>
+        <div class="field"><label for="tTipo">O que você treinou?</label>
+          <input type="text" id="tTipo" placeholder="Ex.: corrida, musculação, futebol" maxlength="40"></div>
+        <div class="row">
+          <div class="field"><label for="tData">Data</label><input type="date" id="tData"></div>
+          <div class="field"><label for="tMin">Duração (min)</label><input type="number" id="tMin" min="5" max="600" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label for="tInt">Intensidade</label><select id="tInt"></select></div>
+        <div class="field"><label for="tObs">Observações <span class="hint">(opcional)</span></label>
+          <textarea id="tObs" maxlength="200" placeholder="Como se sentiu? Alguma dor?"></textarea></div>
+        <p class="erro" id="erroTreino" role="alert"></p>
+        <button class="btn" type="submit">Salvar treino</button>
+      </form>
+    </section>
+
+    <section class="bloco">
+      <div class="cal-topo">
+        <button id="calAnt" type="button" aria-label="Mês anterior">‹</button>
+        <h2 id="calTitulo"></h2>
+        <button id="calProx" type="button" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="cal" id="calGrade"></div>
+      <p class="nota" style="margin-bottom:0">Os dias em verde-claro são dias em que você treinou.</p>
+    </section>
+  </div>
+
+  <div class="grade">
+    <section class="bloco">
+      <h2>Últimos treinos</h2>
+      <ul class="lista" id="lista"></ul>
+      <p class="vazio" id="vazio">Nenhum treino registrado ainda. Salve o primeiro com o botão +.</p>
+    </section>
+
+    <section class="bloco">
+      <h2>Análise da semana</h2>
+      <div class="chips" id="chips">
+        <button class="chip" type="button" data-serie="min" aria-pressed="true">Treino (min)</button>
+        <button class="chip" type="button" data-serie="agua" aria-pressed="false">Água (ml)</button>
+        <button class="chip" type="button" data-serie="sono" aria-pressed="false">Sono (h)</button>
+      </div>
+      <div class="barras" id="barras" role="img" aria-label="Valores de cada dia da semana"></div>
+    </section>
+  </div>
+</main>
+
+<a class="fab" href="#registrar" aria-label="Registrar treino">+</a>
+
+<script src="js/app.js"></script>
+<script>
+const u = Conta.exigirLogin();
+if (u) iniciar(u);
+
+function iniciar(u) {
+  montarTopo();
+  montarMidias();
+  const O = CONFIG.opcoes, meta = u.dias || 3, hora = new Date().getHours();
+  $('#ola').textContent = (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + u.nome.split(' ')[0] + '!';
+  $('#avisoMedico').hidden = !Saude.precisaMedico(u);
+  preencher($('#tInt'), O.intensidades); $('#tInt').value = O.intensidades[1];
+  $('#tData').value = $('#tData').max = Datas.hoje();
+  $('.fab').onclick = () => setTimeout(() => $('#tTipo').focus(), 400);
+
+  let serie = 'min', mes = new Date(); mes.setDate(1);
+  const barra = (id, pct) => { $(id).style.width = Math.max(0, Math.min(100, pct)) + '%'; };
+
+  function calendario(minDia) {
+    const nomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    $('#calTitulo').textContent = nomes[mes.getMonth()] + ' de ' + mes.getFullYear();
+    const g = $('#calGrade'); g.textContent = '';
+    ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].forEach(l => g.append(el('span', l, 'dia-sem')));
+    for (let i = 0; i < (mes.getDay() + 6) % 7; i++) g.append(el('span'));
+    for (let d = 1, total = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate(); d <= total; d++) {
+      const iso = Datas.iso(new Date(mes.getFullYear(), mes.getMonth(), d));
+      const c = el('span', d, 'dia' + (minDia[iso] ? ' treinou' : '') + (iso === Datas.hoje() ? ' hoje' : ''));
+      if (minDia[iso]) c.title = minDia[iso] + ' min';
+      g.append(c);
+    }
+  }
+
+  function analise(minDia) {
+    const semana = Datas.semana(), unidade = { min: ' min', agua: ' ml', sono: ' h' }[serie];
+    const valor = d => { if (serie === 'min') return minDia[d] || 0; const c = Checkins.doDia(d); return c ? c[serie] : 0; };
+    const vals = semana.map(valor), maior = Math.max(...vals, 1), box = $('#barras');
+    box.textContent = ''; box.className = 'barras ' + serie;
+    semana.forEach((d, i) => {
+      const col = el('div', null, vals[i] ? '' : 'zero'), b = el('i');
+      b.style.height = Math.max(4, vals[i] / maior * 90) + 'px'; b.title = fmt(vals[i]) + unidade;
+      col.append(el('em', vals[i] ? fmt(vals[i]) : ''), b, el('span', ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'][i])); box.append(col);
+    });
+  }
+
+  function desenhar() {
+    const minDia = Treinos.minutosPorDia(), semana = Datas.semana(), dias = semana.filter(d => minDia[d]).length;
+    const min = semana.reduce((s, d) => s + (minDia[d] || 0), 0), pct = Math.round(dias / meta * 100);
+    $('#saudTxt').textContent = dias >= meta ? 'Meta da semana cumprida. Descanse e se hidrate.' : 'Você treinou ' + dias + ' de ' + meta + ' dias nesta semana.';
+    barra('#saudBarra', pct); $('#saudMeta').setAttribute('aria-valuenow', Math.min(100, pct));
+
+    const ck = Checkins.doDia(Datas.hoje()), refAgua = Math.round(u.peso * 35), seq = Treinos.sequencia();
+    $('#mSono').textContent = ck ? fmt(ck.sono) : '-';
+    $('#mSonoSub').textContent = ck ? 'h, energia ' + O.energia[ck.energia - 1].toLowerCase() : 'sem check-in hoje';
+    barra('#bSono', ck ? ck.sono / 8 * 100 : 0);
+    $('#mAgua').textContent = ck ? fmt((ck.agua / 1000).toFixed(1)) : '-';
+    $('#mAguaSub').textContent = 'de ' + fmt((refAgua / 1000).toFixed(1)) + ' L';
+    barra('#bAgua', ck ? ck.agua / refAgua * 100 : 0);
+    $('#mTreinos').textContent = dias + '/' + meta; $('#mTreinosSub').textContent = min + ' min'; barra('#bTreinos', pct);
+    $('#mSeq').textContent = seq; $('#mSeqSub').textContent = 'dias seguidos'; barra('#bSeq', seq / 7 * 100);
+
+    calendario(minDia); analise(minDia);
+
+    const ul = $('#lista'); ul.textContent = '';
+    const recentes = [...Treinos.listar()].sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id).slice(0, 6);
+    $('#vazio').hidden = recentes.length > 0;
+    recentes.forEach(t => {
+      const li = el('li'), info = el('div'), btn = el('button', 'Apagar');
+      btn.type = 'button'; btn.setAttribute('aria-label', 'Apagar treino de ' + t.tipo);
+      btn.onclick = () => { Treinos.remover(t.id); desenhar(); };
+      info.append(el('strong', t.tipo), el('span', Datas.br(t.data) + ', ' + t.min + ' min, ' + t.intensidade.toLowerCase() + (t.obs ? '. ' + t.obs : '')));
+      li.append(info, btn); ul.append(li);
+    });
+  }
+
+  $('#calAnt').onclick = () => { mes.setMonth(mes.getMonth() - 1); desenhar(); };
+  $('#calProx').onclick = () => { mes.setMonth(mes.getMonth() + 1); desenhar(); };
+  $$('#chips .chip').forEach(b => b.onclick = () => {
+    serie = b.dataset.serie;
+    $$('#chips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+    analise(Treinos.minutosPorDia());
+  });
+
+  $('#formTreino').onsubmit = e => {
+    e.preventDefault();
+    const tipo = $('#tTipo').value.trim(), data = $('#tData').value, min = +$('#tMin').value, erro = $('#erroTreino');
+    if (!tipo) { erro.textContent = 'Diga o que você treinou.'; $('#tTipo').focus(); return; }
+    if (!data || data > Datas.hoje()) { erro.textContent = 'Escolha uma data de hoje ou anterior.'; $('#tData').focus(); return; }
+    if (!min || min < 5 || min > 600) { erro.textContent = 'Informe a duração entre 5 e 600 minutos.'; $('#tMin').focus(); return; }
+    if (!Treinos.adicionar({ tipo, data, min, intensidade: $('#tInt').value, obs: $('#tObs').value.trim() })) { erro.textContent = 'Não foi possível salvar no navegador.'; return; }
+    erro.textContent = '';
+    $('#tTipo').value = $('#tMin').value = $('#tObs').value = ''; $('#tTipo').focus();
+    desenhar();
+  };
+
+  desenhar();
+}
+</script>
+</body>
+</html>

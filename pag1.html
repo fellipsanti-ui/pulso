@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F0EC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Pulso – Entrar ou criar conta</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script>/* tema salvo, ou o do aparelho; roda antes de desenhar para não piscar */
+try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso_tema')||'null')||(matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro')}catch(e){}
+</script>
+</head>
+<body>
+<main class="shell">
+  <aside class="hero">
+    <div class="brand">Pulso</div>
+    <div>
+      <h1>Treine com dados, não com palpite.</h1>
+      <p>Crie sua conta, conte sobre seu corpo e seu esporte, e acompanhe sua evolução com segurança.</p>
+    </div>
+    <div class="midia" data-midia="login-hero"></div>
+    <svg class="ecg" viewBox="0 0 600 120" aria-hidden="true">
+      <path d="M0 70 H140 L165 70 L185 20 L215 105 L240 70 H330 L350 70 L368 38 L388 82 L405 70 H600"/>
+    </svg>
+  </aside>
+
+  <section class="painel-auth">
+    <div class="card">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabLogin" aria-selected="true" aria-controls="formLogin">Entrar</button>
+        <button class="tab" role="tab" id="tabCadastro" aria-selected="false" aria-controls="formCadastro">Criar conta</button>
+      </div>
+
+      <form id="formLogin" novalidate>
+        <h2>Bem-vindo de volta</h2>
+        <p class="sub">Entre para ver seu painel de treino.</p>
+        <div class="field"><label for="lEmail">E-mail</label>
+          <input type="email" id="lEmail" autocomplete="email"></div>
+        <div class="field"><label for="lSenha">Senha</label>
+          <div class="pw"><input type="password" id="lSenha" autocomplete="current-password">
+          <button type="button" data-ver="lSenha">Mostrar</button></div></div>
+        <p class="erro" id="erroLogin" role="alert"></p>
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+
+      <form id="formCadastro" novalidate hidden>
+        <div class="progress" id="progresso"><span></span><span></span><span></span></div>
+        <p class="stepname" id="nomeEtapa"></p>
+
+        <div class="step">
+          <h2>Crie sua conta</h2>
+          <p class="sub">Leva cerca de dois minutos.</p>
+          <div class="field"><label for="nome">Nome completo</label><input type="text" id="nome" autocomplete="name" required></div>
+          <div class="field"><label for="email">E-mail</label><input type="email" id="email" autocomplete="email" required></div>
+          <div class="field"><label for="senha">Senha <span class="hint">(mínimo 8 caracteres)</span></label>
+            <div class="pw"><input type="password" id="senha" autocomplete="new-password" required>
+            <button type="button" data-ver="senha">Mostrar</button></div></div>
+          <div class="field"><label for="senha2">Repita a senha</label><input type="password" id="senha2" autocomplete="new-password" required></div>
+        </div>
+
+        <div class="step" hidden>
+          <h2>Sobre você</h2>
+          <p class="sub">Usamos esses dados para ajustar metas e calcular seus indicadores.</p>
+          <div class="row">
+            <div class="field"><label for="nasc">Data de nascimento</label><input type="date" id="nasc" required></div>
+            <div class="field"><label for="sexo">Sexo</label><select id="sexo" required></select></div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="altura">Altura <span class="hint">(cm)</span></label>
+              <input type="number" id="altura" min="100" max="250" inputmode="numeric" required></div>
+            <div class="field"><label for="peso">Peso <span class="hint">(kg)</span></label>
+              <input type="number" id="peso" min="30" max="300" step="0.1" inputmode="decimal" required></div>
+          </div>
+        </div>
+
+        <div class="step" hidden>
+          <h2>Esporte e saúde</h2>
+          <p class="sub">Essas respostas ajudam a manter seus treinos seguros.</p>
+          <div class="field"><label for="objetivo">Qual é o seu objetivo principal?</label><select id="objetivo" required></select></div>
+          <div class="row">
+            <div class="field"><label for="esporte">Esporte principal</label><input type="text" id="esporte" placeholder="Ex.: corrida" required></div>
+            <div class="field"><label for="nivel">Nível atual</label><select id="nivel" required></select></div>
+          </div>
+          <div class="field"><label for="dias">Dias de treino por semana</label><select id="dias" required></select></div>
+          <div class="field"><span class="legend">Você tem ou já teve algum destes problemas?</span><div class="checks" id="condicoes"></div></div>
+          <div class="field"><label for="parq">Algum médico já disse que você só deve fazer atividade física com acompanhamento?</label>
+            <select id="parq" required><option value="">Selecione</option><option>Não</option><option>Sim</option></select></div>
+          <div class="field"><label for="lesoes">Lesões ou limitações atuais <span class="hint">(opcional)</span></label>
+            <textarea id="lesoes" maxlength="300"></textarea></div>
+          <label class="consent"><input type="checkbox" id="aceite" required>
+            <span>Autorizo o uso destes dados de saúde para personalizar meus treinos e entendo que posso apagá-los quando quiser.</span></label>
+        </div>
+
+        <p class="erro" id="erroCadastro" role="alert"></p>
+        <div class="actions">
+          <button type="button" class="btn sec" id="btnVoltar" hidden>Voltar</button>
+          <button type="submit" class="btn" id="btnAvancar">Continuar</button>
+        </div>
+      </form>
+      <p class="nota">Este protótipo guarda os dados apenas neste navegador. Para um site real, use um servidor e banco de dados.</p>
+    </div>
+  </section>
+</main>
+
+<script src="js/app.js"></script>
+<script>
+if (Conta.atual()) location.replace(CONFIG.paginas.painel);
+ativarSenhas();
+montarMidias();
+document.body.append(botaoTema('flutuante'));
+
+const O = CONFIG.opcoes;
+preencher($('#sexo'), O.sexos, 'Selecione');
+preencher($('#objetivo'), O.objetivos, 'Selecione');
+preencher($('#nivel'), O.niveis, 'Selecione');
+preencher($('#dias'), [1, 2, 3, 4, 5, 6, 7], 'Selecione');
+montarChecks($('#condicoes'), O.condicoes);
+
+/* Abas */
+function mostrarAba(login) {
+  $('#tabLogin').setAttribute('aria-selected', login);
+  $('#tabCadastro').setAttribute('aria-selected', !login);
+  $('#formLogin').hidden = !login;
+  $('#formCadastro').hidden = login;
+}
+$('#tabLogin').onclick = () => mostrarAba(true);
+$('#tabCadastro').onclick = () => mostrarAba(false);
+
+/* Login */
+$('#formLogin').onsubmit = async e => {
+  e.preventDefault();
+  const email = $('#lEmail').value, senha = $('#lSenha').value;
+  if (!email.trim() || !senha) { $('#erroLogin').textContent = 'Digite e-mail e senha.'; return; }
+  const r = await Conta.entrar(email, senha);
+  if (r.erro) { $('#erroLogin').textContent = r.erro; return; }
+  location.href = CONFIG.paginas.painel;
+};
+
+/* Cadastro em etapas */
+const etapas = $$('#formCadastro .step');
+const nomes = ['Etapa 1 de 3: conta', 'Etapa 2 de 3: seu corpo', 'Etapa 3 de 3: esporte e saúde'];
+let etapa = 0;
+function mostrarEtapa(n) {
+  etapa = n;
+  etapas.forEach((e, i) => e.hidden = i !== n);
+  $$('#progresso span').forEach((s, i) => s.classList.toggle('on', i <= n));
+  $('#nomeEtapa').textContent = nomes[n];
+  $('#btnVoltar').hidden = n === 0;
+  $('#btnAvancar').textContent = n === etapas.length - 1 ? 'Criar conta' : 'Continuar';
+  $('#erroCadastro').textContent = '';
+}
+$('#btnVoltar').onclick = () => mostrarEtapa(etapa - 1);
+
+function validar(n) {
+  for (const c of $$('input[required],select[required]', etapas[n])) {
+    if (c.type === 'checkbox' ? !c.checked : !c.value.trim()) {
+      c.focus();
+      return c.type === 'checkbox' ? 'Para criar a conta, marque a autorização.' : 'Preencha todos os campos obrigatórios.';
+    }
+  }
+  if (n === 0) {
+    if (!$('#email').checkValidity()) return 'Digite um e-mail válido.';
+    if ($('#senha').value.length < 8) return 'A senha precisa ter pelo menos 8 caracteres.';
+    if ($('#senha').value !== $('#senha2').value) return 'As senhas não são iguais.';
+    if (Conta.todos()[$('#email').value.trim().toLowerCase()]) return 'Já existe uma conta com esse e-mail. Use a aba Entrar.';
+  }
+  if (n === 1) {
+    if (Datas.idade($('#nasc').value) < CONFIG.idadeMinima) return `É preciso ter ${CONFIG.idadeMinima} anos ou mais para criar uma conta.`;
+    if (!$('#altura').checkValidity()) return 'Informe a altura em centímetros (entre 100 e 250).';
+    if (!$('#peso').checkValidity()) return 'Informe o peso em quilos (entre 30 e 300).';
+  }
+  if (n === 2 && !$$('#condicoes input:checked').length) return 'Marque os problemas de saúde que você tem ou "Nenhum deles".';
+  return '';
+}
+
+$('#formCadastro').onsubmit = async e => {
+  e.preventDefault();
+  const erro = validar(etapa);
+  $('#erroCadastro').textContent = erro;
+  if (erro) return;
+  if (etapa < etapas.length - 1) return mostrarEtapa(etapa + 1);
+
+  const btn = $('#btnAvancar'); btn.disabled = true;
+  const r = await Conta.criar({
+    nome: $('#nome').value.trim(), email: $('#email').value, senha: $('#senha').value,
+    nasc: $('#nasc').value, sexo: $('#sexo').value, altura: +$('#altura').value, peso: +$('#peso').value,
+    objetivo: $('#objetivo').value, esporte: $('#esporte').value.trim(), nivel: $('#nivel').value, dias: +$('#dias').value,
+    condicoes: $$('#condicoes input:checked').map(c => c.value), parq: $('#parq').value, lesoes: $('#lesoes').value.trim()
+  });
+  btn.disabled = false;
+  if (r.erro) { $('#erroCadastro').textContent = r.erro; return; }
+  location.href = CONFIG.paginas.painel;
+};
+mostrarEtapa(0);
+</script>
+</body>
+</html>

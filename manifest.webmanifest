@@ -1,0 +1,20 @@
+{
+  "name": "Pulso: saúde esportiva",
+  "short_name": "Pulso",
+  "description": "Treinos, recuperação e evolução em um só lugar.",
+  "lang": "pt-BR",
+  "start_url": "./pag1.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F1F0EC",
+  "theme_color": "#437D29",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Registrar treino", "url": "./pag2.html#registrar", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Check-in do dia", "url": "./pag4.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

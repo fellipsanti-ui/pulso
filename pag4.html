@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F0EC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Pulso – Saúde e recuperação</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script>/* tema salvo, ou o do aparelho; roda antes de desenhar para não piscar */
+try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso_tema')||'null')||(matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro')}catch(e){}
+</script>
+</head>
+<body>
+<header id="topo"></header>
+
+<main class="pagina">
+  <h1>Saúde e recuperação</h1>
+  <p class="sub">Registre como você está a cada dia e descubra padrões. Isso não substitui uma avaliação médica.</p>
+
+  <section class="bloco" aria-live="polite">
+    <h2>Hoje</h2>
+    <dl class="stats" id="hoje"></dl>
+    <div class="meta" id="metaAgua" role="progressbar" aria-label="Água de hoje" aria-valuemin="0" aria-valuemax="100"><div id="aguaBarra"></div></div>
+    <p class="sub" id="aguaTxt" style="margin:0"></p>
+  </section>
+
+  <section class="bloco bloco-midia">
+    <h2>Para relaxar e alongar</h2>
+    <div class="midia" data-midia="recuperacao-video"></div>
+  </section>
+
+  <div class="grade">
+    <section class="bloco">
+      <h2>Check-in do dia</h2>
+      <form id="formCheck" novalidate>
+        <div class="row">
+          <div class="field"><label for="cData">Data</label><input type="date" id="cData"></div>
+          <div class="field"><label for="cSono">Sono <span class="hint">(horas)</span></label>
+            <input type="number" id="cSono" min="0" max="16" step="0.5" inputmode="decimal"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="cAgua">Água <span class="hint">(ml)</span></label>
+            <input type="number" id="cAgua" min="0" max="10000" step="50" inputmode="numeric"></div>
+          <div class="field"><label for="cEnergia">Energia e disposição</label><select id="cEnergia"></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="cDor">Dor muscular</label><select id="cDor"></select></div>
+          <div class="field"><label for="cEsforco">Esforço do treino <span class="hint">(0 a 10)</span></label><select id="cEsforco"></select></div>
+        </div>
+        <label class="consent"><input type="checkbox" id="cDescanso"><span>Hoje foi dia de descanso</span></label>
+        <p class="erro" id="erroCheck" role="alert"></p>
+        <button class="btn" type="submit">Salvar check-in</button>
+      </form>
+    </section>
+
+    <section class="bloco">
+      <h2>Últimos 7 dias</h2>
+      <dl class="resumo" id="medias"></dl>
+      <ul class="lista" id="lista" style="margin-top:12px"></ul>
+      <p class="vazio" id="vazio">Nenhum check-in ainda. Salve o primeiro ao lado.</p>
+    </section>
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+<script>
+const u = Conta.exigirLogin();
+if (u) iniciar(u);
+
+function iniciar(u) {
+  montarTopo();
+  montarMidias();
+  const O = CONFIG.opcoes, metaAgua = Math.round(u.peso * 35);   // ml por dia, referência geral
+
+  preencher($('#cEnergia'), [], 'Selecione');
+  O.energia.forEach((t, i) => $('#cEnergia').append(new Option((i + 1) + ': ' + t, i + 1)));
+  preencher($('#cDor'), O.dor);
+  $('#cEsforco').append(new Option('Não treinei', ''));
+  for (let i = 0; i <= 10; i++) $('#cEsforco').append(new Option(i, i));
+  $('#cData').value = $('#cData').max = Datas.hoje();
+
+  // Ao trocar a data, carrega o check-in já salvo nela (se existir)
+  function carregar() {
+    const c = Checkins.doDia($('#cData').value);
+    $('#cSono').value = c ? c.sono : '';
+    $('#cAgua').value = c ? c.agua : '';
+    $('#cEnergia').value = c ? c.energia : '';
+    $('#cDor').value = c ? c.dor : O.dor[0];
+    $('#cEsforco').value = c && c.esforco != null ? c.esforco : '';
+    $('#cDescanso').checked = !!(c && c.descanso);
+  }
+  $('#cData').onchange = carregar;
+
+  function desenhar() {
+    const hoje = Checkins.doDia(Datas.hoje()), sem = 'sem registro';
+    const dl = $('#hoje'); dl.textContent = '';
+    [['Sono', hoje ? fmt(hoje.sono) + ' h' : sem], ['Água', hoje ? hoje.agua + ' ml' : sem], ['Energia', hoje ? O.energia[hoje.energia - 1] : sem]]
+      .forEach(([t, v]) => { const d = el('div'); d.append(el('dt', t), el('dd', v)); dl.append(d); });
+
+    const pct = hoje ? Math.min(100, Math.round(hoje.agua / metaAgua * 100)) : 0;
+    $('#aguaBarra').style.width = pct + '%';
+    $('#metaAgua').setAttribute('aria-valuenow', pct);
+    $('#aguaTxt').textContent = 'Referência geral para o seu peso: ' + fmt((metaAgua / 1000).toFixed(1)) + ' L por dia.';
+
+    const regs = Array.from({ length: 7 }, (_, i) => Checkins.doDia(Datas.soma(Datas.hoje(), -i))).filter(Boolean);
+    const media = k => fmt((regs.reduce((s, r) => s + r[k], 0) / regs.length).toFixed(1));
+    const md = $('#medias'); md.textContent = '';
+    [['Sono médio', regs.length ? media('sono') + ' h' : '-'], ['Energia média', regs.length ? media('energia') + ' de 5' : '-'],
+      ['Dias de descanso', regs.filter(r => r.descanso).length]]
+      .forEach(([t, v]) => { const d = el('div'); d.append(el('dt', t), el('dd', v)); md.append(d); });
+
+    const ul = $('#lista'); ul.textContent = '';
+    $('#vazio').hidden = regs.length > 0;
+    regs.forEach(r => {
+      const li = el('li'), info = el('div');
+      info.append(el('strong', Datas.br(r.data)), el('span',
+        'sono ' + fmt(r.sono) + ' h, água ' + r.agua + ' ml, energia ' + r.energia + '/5, dor ' + r.dor.toLowerCase() +
+        (r.esforco != null ? ', esforço ' + r.esforco + '/10' : '') + (r.descanso ? ', descanso' : '')));
+      li.append(info); ul.append(li);
+    });
+  }
+
+  $('#formCheck').onsubmit = e => {
+    e.preventDefault();
+    const erro = $('#erroCheck'), data = $('#cData').value, sono = +$('#cSono').value, agua = +$('#cAgua').value;
+    if (!data || data > Datas.hoje()) { erro.textContent = 'Escolha uma data de hoje ou anterior.'; return; }
+    if ($('#cSono').value === '' || sono < 0 || sono > 16) { erro.textContent = 'Informe as horas de sono (de 0 a 16).'; $('#cSono').focus(); return; }
+    if ($('#cAgua').value === '' || agua < 0 || agua > 10000) { erro.textContent = 'Informe a água em ml (de 0 a 10000).'; $('#cAgua').focus(); return; }
+    if (!$('#cEnergia').value) { erro.textContent = 'Escolha como estava sua energia.'; $('#cEnergia').focus(); return; }
+    const ok = Checkins.registrar({
+      data, sono, agua, energia: +$('#cEnergia').value, dor: $('#cDor').value,
+      esforco: $('#cEsforco').value === '' ? null : +$('#cEsforco').value, descanso: $('#cDescanso').checked
+    });
+    erro.textContent = ok ? '' : 'Não foi possível salvar no navegador.';
+    if (ok) desenhar();
+  };
+
+  carregar();
+  desenhar();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F0EC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Pulso – Evolução e desempenho</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script>/* tema salvo, ou o do aparelho; roda antes de desenhar para não piscar */
+try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso_tema')||'null')||(matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro')}catch(e){}
+</script>
+</head>
+<body>
+<header id="topo"></header>
+
+<main class="pagina">
+  <h1>Evolução e desempenho</h1>
+  <p class="sub">Compare períodos e acompanhe peso e medidas ao longo do tempo.</p>
+
+  <div class="grade">
+    <section class="bloco">
+      <h2>Semana atual</h2>
+      <dl class="resumo" id="cmpSemana"></dl>
+    </section>
+    <section class="bloco">
+      <h2>Mês atual</h2>
+      <dl class="resumo" id="cmpMes"></dl>
+    </section>
+  </div>
+  <p class="nota" style="margin:-8px 0 20px">A semana e o mês atuais ainda estão em andamento. A variação compara com o período anterior completo.</p>
+
+  <section class="bloco">
+    <h2>Minutos por semana</h2>
+    <div class="barras" id="barras" role="img" aria-label="Minutos treinados nas últimas 8 semanas"></div>
+  </section>
+
+  <div class="grade">
+    <section class="bloco">
+      <h2>Registrar peso e medidas</h2>
+      <form id="formMed" novalidate>
+        <div class="field"><label for="mData">Data</label><input type="date" id="mData"></div>
+        <div class="row">
+          <div class="field"><label for="mPeso">Peso <span class="hint">(kg)</span></label>
+            <input type="number" id="mPeso" min="30" max="300" step="0.1" inputmode="decimal"></div>
+          <div class="field"><label for="mCintura">Cintura <span class="hint">(cm, opcional)</span></label>
+            <input type="number" id="mCintura" min="40" max="250" step="0.5" inputmode="decimal"></div>
+        </div>
+        <p class="erro" id="erroMed" role="alert"></p>
+        <button class="btn" type="submit">Salvar medida</button>
+        <p class="nota">O peso mais recente atualiza o seu IMC na página Minha saúde.</p>
+      </form>
+    </section>
+
+    <section class="bloco">
+      <h2>Peso ao longo do tempo</h2>
+      <svg class="grafico" id="grafico" viewBox="0 0 600 160" role="img" aria-label="Gráfico de peso" hidden></svg>
+      <p class="vazio" id="msgGrafico">Registre pelo menos duas medidas para ver o gráfico.</p>
+      <ul class="lista" id="listaMed" style="margin-top:12px"></ul>
+    </section>
+  </div>
+
+  <section class="bloco">
+    <h2>Histórico de treinos</h2>
+    <ul class="lista" id="historico"></ul>
+    <p class="vazio" id="vazioHist">Nenhum treino registrado ainda. Registre o primeiro no Painel.</p>
+  </section>
+</main>
+
+<script src="js/app.js"></script>
+<script>
+if (Conta.exigirLogin()) iniciar();
+
+function iniciar() {
+  montarTopo();
+  $('#mData').value = $('#mData').max = Datas.hoje();
+
+  const variacao = (a, b) => b ? (a >= b ? '+' : '') + Math.round((a - b) / b * 100) + '% vs. anterior' : 'sem base de comparação';
+  function comparar(box, atual, anterior) {
+    box.textContent = '';
+    [['Minutos', 'min', ' min'], ['Dias de treino', 'dias', ''], ['Treinos', 'treinos', '']].forEach(([titulo, k, suf]) => {
+      const d = el('div'), dd = el('dd', atual[k] + suf);
+      dd.append(el('small', variacao(atual[k], anterior[k])));
+      d.append(el('dt', titulo), dd); box.append(d);
+    });
+  }
+  const sem1 = Datas.segunda(1), mes1 = 1;
+  comparar($('#cmpSemana'), Treinos.totais(Datas.segunda(0), Datas.hoje()), Treinos.totais(sem1, Datas.soma(sem1, 6)));
+  comparar($('#cmpMes'), Treinos.totais(Datas.inicioMes(0), Datas.fimMes(0)), Treinos.totais(Datas.inicioMes(mes1), Datas.fimMes(mes1)));
+
+  // Barras: últimas 8 semanas
+  const inicios = Array.from({ length: 8 }, (_, i) => Datas.segunda(7 - i));
+  const mins = inicios.map(s => Treinos.totais(s, Datas.soma(s, 6)).min), maior = Math.max(30, ...mins), barras = $('#barras');
+  inicios.forEach((s, i) => {
+    const col = el('div', null, mins[i] ? '' : 'zero'), b = el('i');
+    b.style.height = Math.max(3, mins[i] / maior * 80) + 'px'; b.title = mins[i] + ' min';
+    col.append(el('em', mins[i] ? mins[i] : ''), b, el('span', Datas.br(s).slice(0, 5))); barras.append(col);
+  });
+
+  // Histórico (somente leitura; para apagar, use o Painel)
+  const hist = [...Treinos.listar()].sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id).slice(0, 15);
+  $('#vazioHist').hidden = hist.length > 0;
+  hist.forEach(t => {
+    const li = el('li'), info = el('div');
+    info.append(el('strong', t.tipo), el('span', Datas.br(t.data) + ', ' + t.min + ' min, ' + t.intensidade.toLowerCase() + (t.obs ? '. ' + t.obs : '')));
+    li.append(info); $('#historico').append(li);
+  });
+
+  /* Gráfico de linha do peso (SVG) */
+  const S = (tag, at) => { const e = document.createElementNS('http://www.w3.org/2000/svg', tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  function grafico(l) {
+    const svg = $('#grafico'); svg.textContent = '';
+    svg.hidden = l.length < 2; $('#msgGrafico').hidden = l.length >= 2;
+    if (l.length < 2) return;
+    const W = 600, H = 160, P = 36, pesos = l.map(m => m.peso), min = Math.min(...pesos) - 0.5, max = Math.max(...pesos) + 0.5;
+    const x = i => P + i * (W - 2 * P) / (l.length - 1), y = v => H - P - (v - min) / (max - min) * (H - 2 * P);
+    svg.append(S('polyline', { points: l.map((m, i) => x(i) + ',' + y(m.peso)).join(' ') }));
+    l.forEach((m, i) => svg.append(S('circle', { cx: x(i), cy: y(m.peso), r: 4 })));
+    [[0, 'start'], [l.length - 1, 'end']].forEach(([i, ancora]) => {
+      const peso = S('text', { x: x(i), y: y(l[i].peso) - 10, 'text-anchor': ancora }), data = S('text', { x: x(i), y: H - 10, 'text-anchor': ancora });
+      peso.textContent = fmt(l[i].peso) + ' kg'; data.textContent = Datas.br(l[i].data).slice(0, 5);
+      svg.append(peso, data);
+    });
+  }
+
+  function desenharMedidas() {
+    const l = [...Medidas.listar()].sort((a, b) => a.data.localeCompare(b.data));
+    grafico(l.slice(-12));
+    const ul = $('#listaMed'); ul.textContent = '';
+    [...l].reverse().slice(0, 6).forEach(m => {
+      const li = el('li'), info = el('div'), btn = el('button', 'Apagar');
+      btn.type = 'button'; btn.setAttribute('aria-label', 'Apagar medida de ' + Datas.br(m.data));
+      btn.onclick = () => { Medidas.remover(m.data); desenharMedidas(); };
+      info.append(el('strong', Datas.br(m.data)), el('span', fmt(m.peso) + ' kg' + (m.cintura ? ', cintura ' + fmt(m.cintura) + ' cm' : '')));
+      li.append(info, btn); ul.append(li);
+    });
+  }
+
+  $('#formMed').onsubmit = e => {
+    e.preventDefault();
+    const erro = $('#erroMed'), data = $('#mData').value, peso = +$('#mPeso').value, cint = $('#mCintura').value;
+    if (!data || data > Datas.hoje()) { erro.textContent = 'Escolha uma data de hoje ou anterior.'; return; }
+    if (!$('#mPeso').value || peso < 30 || peso > 300) { erro.textContent = 'Informe o peso em quilos (entre 30 e 300).'; $('#mPeso').focus(); return; }
+    if (cint && (+cint < 40 || +cint > 250)) { erro.textContent = 'Informe a cintura em centímetros (entre 40 e 250).'; $('#mCintura').focus(); return; }
+    if (!Medidas.registrar({ data, peso, cintura: cint ? +cint : null })) { erro.textContent = 'Não foi possível salvar no navegador.'; return; }
+    const maisRecente = [...Medidas.listar()].sort((a, b) => b.data.localeCompare(a.data))[0];
+    Conta.atualizar({ peso: maisRecente.peso });
+    erro.textContent = ''; $('#mPeso').value = $('#mCintura').value = '';
+    desenharMedidas();
+  };
+
+  desenharMedidas();
+}
+</script>
+</body>
+</html>
