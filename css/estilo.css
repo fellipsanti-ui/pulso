@@ -3,20 +3,20 @@
    --r = campos | --r-lg = cartões | --pill = botões e menu */
    @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
    :root{
-     --bg:#F1F0EC; --surface:#fff; --ink:#1E2A22; --muted:#66726A; --line:#E4E6DF;
-     --accent:#437D29; --barra:#6BAF48; --accent-soft:#E1EDD8; --verde-escuro:#2F5A3B; --pulse:#A8E08A; --danger:#B3261E;
+     --bg:#F1F0EC; --surface:#fff; --ink:#2A1F1A; --muted:#726761; --line:#E6E4DF;
+     --accent:#FF6F00; --barra:#FF9100; --accent-soft:#FFE0B2; --verde-escuro:#5E2F00; --pulse:#FFB74D; --danger:#B3261E;
      --azul:#DCEBFA; --rosa:#FBE3E3; --laranja:#FDEBCF;
-     --on-accent:#fff; --logo:#2F5A3B; --aviso:#FFF4D6; --chip-on:#D3E6C6; --tab-bg:#E7E8E1; --midia-bg:#DDE5DA; --traco:#B7C4B8;
+     --on-accent:#fff; --logo:#5E2F00; --aviso:#FFF4D6; --chip-on:#FFE0B2; --tab-bg:#E7E8E1; --midia-bg:#E5DDD2; --traco:#C4BBB7;
      color-scheme:light;
-     --r:14px; --r-lg:24px; --pill:999px; --sombra:0 2px 14px rgba(30,42,34,.06);
+     --r:14px; --r-lg:24px; --pill:999px; --sombra:0 2px 14px rgba(42,31,26,.06);
      --text:"DM Sans","Segoe UI",system-ui,sans-serif; --display:var(--text);
    }
    /* Modo escuro: ligado pelo botão do topo (data-tema="escuro" no <html>). Só as variáveis mudam. */
    :root[data-tema=escuro]{
-     --bg:#111813; --surface:#1B261F; --ink:#E8EEE9; --muted:#9FADA3; --line:#2C3B31;
-     --accent:#8FD36B; --barra:#6BAF48; --accent-soft:#233A29; --verde-escuro:#1F3D28; --pulse:#A8E08A; --danger:#FF8A80;
+     --bg:#181311; --surface:#261F1B; --ink:#EEE9E8; --muted:#ADA19F; --line:#3B302C;
+     --accent:#FF9100; --barra:#FF6F00; --accent-soft:#3E2723; --verde-escuro:#3E2723; --pulse:#FFB74D; --danger:#FF8A80;
      --azul:#1F3A4D; --rosa:#4A2626; --laranja:#4A3A1E;
-     --on-accent:#10200F; --logo:#A8E08A; --aviso:#3B3519; --chip-on:#2F4F35; --tab-bg:#0E1510; --midia-bg:#243229; --traco:#3C4E42;
+     --on-accent:#1A0F00; --logo:#FFB74D; --aviso:#3B3519; --chip-on:#4E342E; --tab-bg:#15100E; --midia-bg:#322724; --traco:#4E3C38;
      --sombra:0 2px 14px rgba(0,0,0,.35); color-scheme:dark;
    }
    *{box-sizing:border-box}
@@ -77,7 +77,7 @@
    .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent-soft);color:var(--logo);display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}
    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
    .avatar.grande{width:96px;height:96px;font-size:2rem}
-   .fab{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;background:var(--accent);color:var(--on-accent);font:600 2rem/1 var(--text);display:grid;place-items:center;text-decoration:none;box-shadow:0 8px 20px rgba(67,125,41,.35);z-index:9}
+   .fab{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;background:var(--accent);color:var(--on-accent);font:600 2rem/1 var(--text);display:grid;place-items:center;text-decoration:none;box-shadow:0 8px 20px rgba(255,111,0,.35);z-index:9}
    
    /* ----- Fotos e vídeos (espaços controlados por CONFIG.midias) ----- */
    .midia{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--midia-bg);aspect-ratio:16/9;display:grid;place-items:center}
@@ -92,11 +92,11 @@
    
    /* ----- Login ----- */
    .shell{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
-   .hero{background:var(--verde-escuro);color:#EAF3E6;padding:44px;display:flex;flex-direction:column;justify-content:space-between;gap:24px;border-radius:0 32px 32px 0}
+   .hero{background:var(--verde-escuro);color:#FFE0B2;padding:44px;display:flex;flex-direction:column;justify-content:space-between;gap:24px;border-radius:0 32px 32px 0}
    .brand{font-weight:700;font-size:1.4rem}
    .hero h1{font-size:clamp(2.1rem,4.2vw,3.4rem);line-height:1.04;letter-spacing:-.02em;margin:0 0 14px;max-width:13ch}
-   .hero p{margin:0;max-width:38ch;color:#C5D8BF}
-   .hero .midia.vazia{border-color:#5C8366;color:#C5D8BF}
+   .hero p{margin:0;max-width:38ch;color:#E5CCA9}
+   .hero .midia.vazia{border-color:#8D5B4C;color:#E5CCA9}
    .ecg{width:100%;height:auto;display:block}
    .ecg path{fill:none;stroke:var(--pulse);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.6s ease-out .3s forwards}
    @keyframes draw{to{stroke-dashoffset:0}}
