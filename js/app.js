@@ -9,7 +9,13 @@ const CONFIG = {
   idadeMinima: 14,
   paginas: { login: 'pag1.html', painel: 'pag2.html', saude: 'pag3.html' },
   chaves: { usuarios: 'pulso_usuarios', sessao: 'pulso_sessao', treinos: 'pulso_treinos', checkins: 'pulso_checkins', medidas: 'pulso_medidas', tema: 'pulso_tema' },
-  menu: [['pag2.html', 'Painel', '📊'], ['pag4.html', 'Recuperação', '🌙'], ['pag5.html', 'Evolução', '📈'], ['pag3.html', 'Minha saúde', '❤️']],
+  menu:  [
+    ['pag2.html', 'Painel', '📊'], 
+    ['pag4.html', 'Recuperação', '🌙'], 
+    ['pag5.html', 'Evolução', '📈'], 
+    ['pag3.html', 'Minha saúde', '❤️'],
+    ['pag6.html', 'Ajustes', '⚙️']
+  ],
   condicoesRisco: ['Problema cardíaco', 'Pressão alta'],
   // Aplicativo instalável: o service worker só liga em https (ou aqui, se serviceWorkerEmLocalhost for true).
   // Deixe false enquanto edita o site, para o navegador não guardar arquivos antigos.

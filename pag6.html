@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulso – Configurações</title>
+  <link rel="stylesheet" href="css/estilo.css">
+  <meta name="theme-color" content="#F1F0EC">
+  <style>
+    /* Estilos adicionais para o Tour Interativo por Abas */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: grid; place-items: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-backdrop.show {
+      opacity: 1; pointer-events: auto;
+    }
+    .modal-conteudo {
+      background: var(--surface);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      width: min(92%, 560px);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--sombra);
+      transform: translateY(20px);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-backdrop.show .modal-conteudo {
+      transform: translateY(0);
+    }
+    
+    /* Grid de navegação das páginas dentro do Tour */
+    .tour-nav {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin: 14px 0;
+    }
+    @media (min-width: 480px) {
+      .tour-nav {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    .tour-btn {
+      background: var(--tab-bg);
+      border: 0;
+      padding: 10px 4px;
+      font: 600 0.85rem var(--text);
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: var(--r);
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .tour-btn[aria-selected="true"] {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    /* Painéis de conteúdo do Tour */
+    .tour-painel {
+      display: none;
+      background: var(--bg);
+      border-radius: var(--r);
+      padding: 16px;
+      margin-bottom: 16px;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+    .tour-painel.active {
+      display: block;
+    }
+    .tour-painel h3 {
+      margin: 0 0 6px 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tour-painel ul {
+      margin: 10px 0 0 0;
+      padding-left: 20px;
+    }
+    .tour-painel li {
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="topo"></header>
+
+  <main class="pagina">
+    <header class="saudacao">
+      <div>
+        <h1>Configurações</h1>
+        <p class="sub">Personalize a sua experiência no aplicativo.</p>
+      </div>
+    </header>
+
+    <!-- Bloco 1: Preferências Visuais -->
+    <section class="bloco">
+      <h2>Visual e Tema</h2>
+      <p class="hint">Alterne a paleta de cores para maior conforto visual.</p>
+      <div class="field" style="margin-top: 14px;">
+        <div id="container-botao-tema"></div>
+      </div>
+    </section>
+
+    <!-- Bloco 2: Dicas e Apresentação das Páginas -->
+    <section class="bloco">
+      <h2>Apoio e Aprendizado</h2>
+      <p class="hint">Explore as funcionalidades e regras de cada tela do Pulso.</p>
+      <div style="margin-top: 16px;">
+        <button type="button" class="btn sec" id="btn-ajuda" style="width: auto; display: inline-flex; align-items: center; gap: 8px;">
+          ⚙️ Dicas e Apresentação
+        </button>
+      </div>
+    </section>
+
+    <!-- Bloco 3: Sobre o Aplicativo -->
+    <section class="bloco">
+      <h2>Sobre o Pulso</h2>
+      <p class="hint">Informações técnicas do protótipo PWA.</p>
+      <ul class="lista">
+        <li>
+          <div>
+            <strong>Versão do Sistema</strong>
+            <span>v3.2.0 — Laranja Tangerina</span>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Armazenamento Local</strong>
+            <span>Os dados estão salvos de forma segura apenas neste navegador.</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Bloco 4: Zona de Perigo -->
+    <section class="bloco" style="border: 1.5px solid var(--danger); background: rgba(179, 38, 30, 0.03);">
+      <h2 style="color: var(--danger);">Zona de Perigo</h2>
+      <p class="hint">Ações irreversíveis sobre a sua conta local.</p>
+      
+      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <button type="button" class="btn perigo" id="btn-limpar-dados">Limpar Histórico de Treinos</button>
+        <button type="button" class="btn perigo" id="btn-apagar-conta" style="background: var(--danger); color: white;">Apagar Minha Conta Permanentemente</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Janela Modal do Tour do Aplicativo -->
+  <div class="modal-backdrop" id="modal-ajuda">
+    <div class="modal-conteudo">
+      <h2>Apresentação do Pulso 🚀</h2>
+      <p class="hint">Selecione uma das telas abaixo para entender suas funções e regras:</p>
+      
+      <!-- Menu de abas das páginas -->
+      <nav class="tour-nav" role="tablist">
+        <button class="tour-btn" role="tab" aria-selected="true" data-target="painel">📊 Painel</button>
+        <button class="tour-btn" role="tab" aria-selected="false" data-target="recuperacao">🌙 Recuperação</button>
+        <button class="tour-btn" role="tab" aria-selected="false" data-target="evolucao">📈 Evolução</button>
+        <button class="tour-btn" role="tab" aria-selected="false" data-target="saude">❤️ Saúde</button>
+      </nav>
+
+      <!-- Conteúdo de cada página -->
+      <div id="painel" class="tour-painel active">
+        <h3>📊 Página 2: Painel Principal</h3>
+        <p class="hint">Sua central diária de comando e acompanhamento de constância.</p>
+        <ul>
+          <li><strong>Registro de Treino:</strong> Salva o esporte, data, tempo de duração e intensidade do esforço.</li>
+          <li><strong>Cálculo de Sequência (Streak):</strong> Monitora quantos dias seguidos você treinou. Se você quebrar o ritmo por mais de um dia, o contador zera!</li>
+          <li><strong>Resumo Rápido:</strong> Mostra na hora os dados consolidados do seu último check-in de sono, consumo de água e os minutos totais de treino da semana.</li>
+        </ul>
+      </div>
+
+      <div id="recuperacao" class="tour-painel">
+        <h3>🌙 Página 4: Saúde e Recuperação</h3>
+        <p class="hint">Focada no equilíbrio fisiológico para evitar o overtraining.</p>
+        <ul>
+          <li><strong>Check-in Diário:</strong> Registra variáveis fundamentais como horas de sono dormidas na noite anterior e volume total de água ingerida.</li>
+          <li><strong>Escalas Subjetivas:</strong> Avalia seus níveis de energia e dor muscular de forma preventiva.</li>
+          <li><strong>Dia de Descanso:</strong> Permite marcar taxas sem atividade física para validar que a pausa planejada faz parte da sua rotina de ganhos.</li>
+        </ul>
+      </div>
+
+      <div id="evolucao" class="tour-painel">
+        <h3>📈 Página 5: Evolução e Desempenho</h3>
+        <p class="hint">Geração de relatórios analíticos de longo prazo.</p>
+        <ul>
+          <li><strong>Histórico Cronológico:</strong> Centraliza a listagem completa de todas as sessões de exercícios feitas desde a abertura da sua conta.</li>
+          <li><strong>Gráficos de Peso e Medidas:</strong> Exibe linhas temporais de oscilação do peso e da circunferência da cintura. É necessário cadastrar ao menos duas medidas para liberar os gráficos.</li>
+          <li><strong>Comparativos de Período:</strong> Calcula se o seu volume de minutos na semana ou mês atual está maior ou menor do que nos períodos passados.</li>
+        </ul>
+      </div>
+
+      <div id="saude" class="tour-painel">
+        <h3>❤️ Página 3: Minha Saúde</h3>
+        <p class="hint">Avaliação do seu estado antropométrico e zonas biológicas.</p>
+        <ul>
+          <li><strong>Cálculo do IMC:</strong> Avalia seu Índice de Massa Corporal dinamicamente cruzando os dados do seu peso mais recente e sua altura.</li>
+          <li><strong>Zonas Cardíacas (Tanaka):</strong> Aplica a fórmula matemática 208 - (0.7 × idade) para definir a sua frequência cardíaca máxima e segmentar suas 5 zonas de treino (da recuperação ao esforço máximo).</li>
+          <li><strong>Anamnese de Segurança:</strong> Armazena o questionário PAR-Q. Se houver alertas médicos ou doenças crônicas ativas, o sistema exibe avisos para você buscar validação médica profissional.</li>
+        </ul>
+      </div>
+
+      <button type="button" class="btn" id="btn-fechar-ajuda">Fechar Apresentação</button>
+    </div>
+  </div>
+
+  <!-- Scripts do App -->
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Controle de sessão e renderização da barra do topo
+      const usuario = Conta.exigirLogin();
+      if (!usuario) return;
+      montarTopo();
+
+      // 2. Renderização do botão de tema claro/escuro nativo
+      const containerTema = $('#container-botao-tema');
+      if (containerTema) {
+        const btn = botaoTema('mini');
+        btn.style.width = 'auto';
+        btn.style.display = 'flex';
+        btn.style.gap = '8px';
+        btn.style.alignItems = 'center';
+        btn.style.padding = '10px 20px';
+        btn.style.borderRadius = 'var(--pill)';
+        const textoBotao = document.createTextNode(' Alternar Modo Escuro / Claro');
+        btn.appendChild(textoBotao);
+        containerTema.appendChild(btn);
+      }
+
+      // 3. Controle Geral da Janela Modal (Abrir e Fechar)
+      const modal = $('#modal-ajuda');
+      $('#btn-ajuda').onclick = () => modal.classList.add('show');
+      $('#btn-fechar-ajuda').onclick = () => modal.classList.remove('show');
+      modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+
+      // 4. Lógica de Alternância das Abas do Tour Apresentação
+      const botoesTour = $$('.tour-btn');
+      const paineisTour = $$('.tour-painel');
+
+      botoesTour.forEach(botao => {
+        botao.onclick = () => {
+          botoesTour.forEach(b => b.setAttribute('aria-selected', 'false'));
+          paineisTour.forEach(p => p.classList.remove('active'));
+
+          botao.setAttribute('aria-selected', 'true');
+          const alvoId = botao.dataset.target;
+          $('#' + alvoId).classList.add('active');
+        };
+      });
+
+      // 5. Ação: Limpar os dados de treinos
+      $('#btn-limpar-dados').onclick = () => {
+        if (confirm('Tem certeza de que deseja apagar todos os seus treinos registrados? Essa ação não pode ser desfeita.')) {
+          const t = Store.ler(CONFIG.chaves.treinos, {});
+          t[usuario.email] = [];
+          if (Store.gravar(CONFIG.chaves.treinos, t)) {
+            alert('Histórico de treinos limpo com sucesso!');
+            location.reload();
+          }
+        }
+      };
+
+      // 6. Ação: Exclusão completa da Conta
+      $('#btn-apagar-conta').onclick = () => {
+        if (confirm('ATENÇÃO: Deseja realmente apagar sua conta e todos os seus dados de saúde? Esta ação é irreversível.')) {
+          Conta.apagar();
+        }
+      };
+    });
+  </script>
+</body>
+</html>
