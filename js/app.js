@@ -20,9 +20,9 @@ const CONFIG = {
   // Com src vazio aparece um espaço reservado. mostrarVazios: false esconde os espaços ainda vazios.
   midias: {
     mostrarVazios: true,
-    'login-hero': { src: '', legenda: 'Foto ou vídeo de abertura' },
-    'painel-banner': { src: '', legenda: 'Foto do banner' },
-    'recuperacao-video': { src: '', poster: '', legenda: 'Vídeo de alongamento ou respiração' }
+    'login-hero': { src: 'img/login-corrida.svg', legenda: 'Pessoa correndo numa pista ao nascer do sol, em tons de laranja' },
+    'painel-banner': { src: 'img/painel-banner.svg', legenda: 'Sol, colinas alaranjadas, uma gota de água e a linha do batimento cardíaco' },
+    'recuperacao-video': { src: 'img/recuperacao-alongamento.svg', poster: '', legenda: 'Pessoa se alongando num tapete laranja, perto de uma janela e de uma planta' }
   },
   opcoes: {
     sexos: ['Feminino', 'Masculino', 'Prefiro não informar'],
