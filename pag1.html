@@ -61,7 +61,6 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
           <div class="field"><label for="senha">Senha <span class="hint">(mínimo 8 caracteres)</span></label>
             <div class="pw"><input type="password" id="senha" autocomplete="new-password" required>
             <button type="button" data-ver="senha">Mostrar</button></div></div>
-          <div class="field"><label for="senha2">Repita a senha</label><input type="password" id="senha2" autocomplete="new-password" required></div>
         </div>
 
         <div class="step" hidden>
@@ -69,7 +68,7 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
           <p class="sub">Usamos esses dados para ajustar metas e calcular seus indicadores.</p>
           <div class="row">
             <div class="field"><label for="nasc">Data de nascimento</label><input type="date" id="nasc" required></div>
-            <div class="field"><label for="sexo">Sexo</label><select id="sexo" required></select></div>
+            <div class="field"><span class="legend">Sexo</span><div id="gSexo"></div></div>
           </div>
           <div class="row">
             <div class="field"><label for="altura">Altura <span class="hint">(cm)</span></label>
@@ -85,12 +84,11 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
           <div class="field"><label for="objetivo">Qual é o seu objetivo principal?</label><select id="objetivo" required></select></div>
           <div class="row">
             <div class="field"><label for="esporte">Esporte principal</label><input type="text" id="esporte" placeholder="Ex.: corrida" required></div>
-            <div class="field"><label for="nivel">Nível atual</label><select id="nivel" required></select></div>
+            <div class="field"><span class="legend">Nível atual</span><div id="gNivel"></div></div>
           </div>
-          <div class="field"><label for="dias">Dias de treino por semana</label><select id="dias" required></select></div>
+          <div class="field"><span class="legend">Dias de treino por semana</span><div id="gDias"></div></div>
           <div class="field"><span class="legend">Você tem ou já teve algum destes problemas?</span><div class="checks" id="condicoes"></div></div>
-          <div class="field"><label for="parq">Algum médico já disse que você só deve fazer atividade física com acompanhamento?</label>
-            <select id="parq" required><option value="">Selecione</option><option>Não</option><option>Sim</option></select></div>
+          <div class="field"><span class="legend">Algum médico já disse que você só deve fazer atividade física com acompanhamento?</span><div id="gParq"></div></div>
           <div class="field"><label for="lesoes">Lesões ou limitações atuais <span class="hint">(opcional)</span></label>
             <textarea id="lesoes" maxlength="300"></textarea></div>
           <label class="consent"><input type="checkbox" id="aceite" required>
@@ -116,10 +114,11 @@ montarMidias();
 document.body.append(botaoTema('flutuante'));
 
 const O = CONFIG.opcoes;
-preencher($('#sexo'), O.sexos, 'Selecione');
 preencher($('#objetivo'), O.objetivos, 'Selecione');
-preencher($('#nivel'), O.niveis, 'Selecione');
-preencher($('#dias'), [1, 2, 3, 4, 5, 6, 7], 'Selecione');
+const gSexo = grupoChips($('#gSexo'), O.sexos, { rotulo: 'Sexo' });
+const gNivel = grupoChips($('#gNivel'), O.niveis, { rotulo: 'Nível atual', inicial: 'Iniciante' });   // já vem marcado: é só mudar se não for o caso
+const gDias = grupoChips($('#gDias'), [1, 2, 3, 4, 5, 6, 7], { rotulo: 'Dias de treino por semana', inicial: 3 });
+const gParq = grupoChips($('#gParq'), ['Não', 'Sim'], { rotulo: 'Acompanhamento médico' });   // de propósito sem resposta pré-marcada
 montarChecks($('#condicoes'), O.condicoes);
 
 /* Abas */
@@ -158,7 +157,7 @@ function mostrarEtapa(n) {
 $('#btnVoltar').onclick = () => mostrarEtapa(etapa - 1);
 
 function validar(n) {
-  for (const c of $$('input[required],select[required]', etapas[n])) {
+  for (const c of $$('input[required]:not([type=checkbox]),select[required]', etapas[n])) {
     if (c.type === 'checkbox' ? !c.checked : !c.value.trim()) {
       c.focus();
       return c.type === 'checkbox' ? 'Para criar a conta, marque a autorização.' : 'Preencha todos os campos obrigatórios.';
@@ -167,15 +166,17 @@ function validar(n) {
   if (n === 0) {
     if (!$('#email').checkValidity()) return 'Digite um e-mail válido.';
     if ($('#senha').value.length < 8) return 'A senha precisa ter pelo menos 8 caracteres.';
-    if ($('#senha').value !== $('#senha2').value) return 'As senhas não são iguais.';
     if (Conta.todos()[$('#email').value.trim().toLowerCase()]) return 'Já existe uma conta com esse e-mail. Use a aba Entrar.';
   }
   if (n === 1) {
     if (Datas.idade($('#nasc').value) < CONFIG.idadeMinima) return `É preciso ter ${CONFIG.idadeMinima} anos ou mais para criar uma conta.`;
     if (!$('#altura').checkValidity()) return 'Informe a altura em centímetros (entre 100 e 250).';
     if (!$('#peso').checkValidity()) return 'Informe o peso em quilos (entre 30 e 300).';
+    if (!gSexo.valor) return 'Escolha uma opção em Sexo.';
   }
+  if (n === 2 && !gParq.valor) return 'Responda se algum médico já pediu acompanhamento para você treinar.';
   if (n === 2 && !$$('#condicoes input:checked').length) return 'Marque os problemas de saúde que você tem ou "Nenhum deles".';
+  if (n === 2 && !$('#aceite').checked) { $('#aceite').focus(); return 'Para criar a conta, marque a autorização.'; }
   return '';
 }
 
@@ -189,9 +190,9 @@ $('#formCadastro').onsubmit = async e => {
   const btn = $('#btnAvancar'); btn.disabled = true;
   const r = await Conta.criar({
     nome: $('#nome').value.trim(), email: $('#email').value, senha: $('#senha').value,
-    nasc: $('#nasc').value, sexo: $('#sexo').value, altura: +$('#altura').value, peso: +$('#peso').value,
-    objetivo: $('#objetivo').value, esporte: $('#esporte').value.trim(), nivel: $('#nivel').value, dias: +$('#dias').value,
-    condicoes: $$('#condicoes input:checked').map(c => c.value), parq: $('#parq').value, lesoes: $('#lesoes').value.trim()
+    nasc: $('#nasc').value, sexo: gSexo.valor, altura: +$('#altura').value, peso: +$('#peso').value,
+    objetivo: $('#objetivo').value, esporte: $('#esporte').value.trim(), nivel: gNivel.valor, dias: gDias.valor,
+    condicoes: $$('#condicoes input:checked').map(c => c.value), parq: gParq.valor, lesoes: $('#lesoes').value.trim()
   });
   btn.disabled = false;
   if (r.erro) { $('#erroCadastro').textContent = r.erro; return; }

@@ -25,17 +25,9 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
   <div class="aviso" id="avisoMedico" hidden>Pelas suas respostas, converse com um médico antes de começar ou intensificar os treinos.</div>
 
   <section class="bloco">
-    <h2>Foto de perfil</h2>
-    <div class="foto-perfil">
-      <div id="fotoPerfil"></div>
-      <div>
-        <button class="btn sec mini" id="btnFoto" type="button">Escolher foto</button>
-        <button class="btn perigo mini" id="btnRemoverFoto" type="button" hidden>Remover</button>
-        <input type="file" id="arqFoto" accept="image/*" hidden>
-        <p class="nota" style="margin:8px 0 0">A foto é recortada em quadrado e fica guardada só neste navegador.</p>
-      </div>
-    </div>
-    <p class="erro" id="msgFoto" role="status"></p>
+    <h2>Perfil</h2>
+    <p class="sub">Sua foto, nome, peso, altura e objetivo agora ficam em Configurações.</p>
+    <a class="btn sec" href="pag6.html#perfil">Editar meu perfil</a>
   </section>
 
   <section class="bloco">
@@ -48,43 +40,6 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
     <p class="sub" id="zonasTxt" style="margin-bottom:8px"></p>
     <ul class="lista" id="zonas"></ul>
   </section>
-
-  <section class="bloco">
-    <h2>Atualizar meus dados</h2>
-    <form id="formDados" novalidate>
-      <div class="row">
-        <div class="field"><label for="peso">Peso <span class="hint">(kg)</span></label>
-          <input type="number" id="peso" min="30" max="300" step="0.1" inputmode="decimal"></div>
-        <div class="field"><label for="altura">Altura <span class="hint">(cm)</span></label>
-          <input type="number" id="altura" min="100" max="250" inputmode="numeric"></div>
-      </div>
-      <div class="row">
-        <div class="field"><label for="objetivo">Objetivo</label><select id="objetivo"></select></div>
-        <div class="field"><label for="nivel">Nível atual</label><select id="nivel"></select></div>
-      </div>
-      <div class="row">
-        <div class="field"><label for="esporte">Esporte principal</label><input type="text" id="esporte" maxlength="40"></div>
-        <div class="field"><label for="dias">Dias de treino por semana</label><select id="dias"></select></div>
-      </div>
-      <p class="erro" id="msgDados" role="status"></p>
-      <button class="btn" type="submit">Salvar alterações</button>
-    </form>
-  </section>
-
-  <section class="bloco">
-    <h2>Instalar como aplicativo</h2>
-    <p class="sub" id="appTxt"></p>
-    <button class="btn" id="btnInstalar" type="button" hidden>Instalar o Pulso</button>
-  </section>
-
-  <section class="bloco">
-    <h2>Seus dados</h2>
-    <p class="sub">Você pode baixar uma cópia do que está guardado ou apagar a conta.</p>
-    <div class="row">
-      <button class="btn sec" id="btnBackup" type="button">Baixar meus dados</button>
-      <button class="btn perigo" id="btnApagar" type="button">Apagar minha conta</button>
-    </div>
-  </section>
 </main>
 
 <script src="js/app.js"></script>
@@ -93,13 +48,9 @@ if (Conta.exigirLogin()) iniciar();
 
 function iniciar() {
   montarTopo();
-  const O = CONFIG.opcoes;
-  preencher($('#objetivo'), O.objetivos); preencher($('#nivel'), O.niveis); preencher($('#dias'), [1, 2, 3, 4, 5, 6, 7]);
-
   function desenhar() {
     const u = Conta.atual(), idade = Datas.idade(u.nasc), imc = Saude.imc(u), fc = Saude.fcMax(idade);
     $('#avisoMedico').hidden = !Saude.precisaMedico(u);
-    $('#fotoPerfil').textContent = ''; $('#fotoPerfil').append(avatar(u, true)); $('#btnRemoverFoto').hidden = !u.foto;
 
     const itens = [['IMC', imc.toFixed(1) + ', ' + Saude.faixaImc(imc)], ['Frequência máxima estimada', fc + ' bpm'], ['Água por dia (referência)', Saude.aguaLitros(u.peso) + ' L']];
     const dl = $('#indicadores'); dl.textContent = '';
@@ -108,62 +59,7 @@ function iniciar() {
     $('#zonasTxt').textContent = 'Estimativa para ' + idade + ' anos (fórmula de Tanaka). Para treinar em uma zona, mantenha os batimentos dentro da faixa.';
     const ul = $('#zonas'); ul.textContent = '';
     Saude.zonas(fc).forEach(([nome, a, b]) => { const li = el('li'); li.append(el('strong', nome), el('span', a + ' a ' + b + ' bpm')); ul.append(li); });
-
-    $('#peso').value = u.peso; $('#altura').value = u.altura; $('#objetivo').value = u.objetivo;
-    $('#nivel').value = u.nivel; $('#esporte').value = u.esporte; $('#dias').value = u.dias;
   }
-
-  $('#formDados').onsubmit = e => {
-    e.preventDefault();
-    const msg = $('#msgDados'); msg.className = 'erro';
-    if (!$('#peso').checkValidity() || !$('#peso').value) { msg.textContent = 'Informe o peso em quilos (entre 30 e 300).'; return; }
-    if (!$('#altura').checkValidity() || !$('#altura').value) { msg.textContent = 'Informe a altura em centímetros (entre 100 e 250).'; return; }
-    if (!$('#esporte').value.trim()) { msg.textContent = 'Informe seu esporte principal.'; return; }
-    const ok = Conta.atualizar({
-      peso: +$('#peso').value, altura: +$('#altura').value, objetivo: $('#objetivo').value,
-      nivel: $('#nivel').value, esporte: $('#esporte').value.trim(), dias: +$('#dias').value
-    });
-    msg.className = ok ? 'ok' : 'erro';
-    msg.textContent = ok ? 'Dados atualizados.' : 'Não foi possível salvar no navegador.';
-    if (ok) desenhar();
-  };
-
-  $('#btnBackup').onclick = () => {
-    const { sal, hash, ...perfil } = Conta.atual();
-    const blob = new Blob([JSON.stringify({ conta: perfil, treinos: Treinos.listar() }, null, 2)], { type: 'application/json' });
-    const a = el('a'); a.href = URL.createObjectURL(blob); a.download = 'pulso-meus-dados.json'; a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  $('#btnApagar').onclick = () => {
-    if (confirm('Apagar sua conta e todos os treinos? Isso não pode ser desfeito.')) Conta.apagar();
-  };
-
-  function atualizarApp() {
-    const txt = $('#appTxt'), btn = $('#btnInstalar');
-    if (modoApp()) { txt.textContent = 'Você já está usando o Pulso como aplicativo.'; btn.hidden = true; return; }
-    btn.hidden = !convitePwa;
-    txt.textContent = convitePwa
-      ? 'Instale para abrir o Pulso direto da tela inicial, em tela cheia e até sem internet.'
-      : 'iPhone: toque em Compartilhar e depois em "Adicionar à Tela de Início". Android: abra o menu do navegador e escolha "Instalar aplicativo". Computador: use o ícone de instalar na barra de endereço. O site precisa estar em um endereço seguro (https).';
-  }
-  document.addEventListener('convite-app', atualizarApp);
-  $('#btnInstalar').onclick = async () => { await instalarApp(); atualizarApp(); };
-  atualizarApp();
-
-  $('#btnFoto').onclick = () => $('#arqFoto').click();
-  $('#arqFoto').onchange = async e => {
-    const msg = $('#msgFoto'), arq = e.target.files[0];
-    if (!arq) return;
-    msg.className = 'erro';
-    try {
-      const ok = Conta.atualizar({ foto: await fotoParaDataURL(arq) });
-      msg.className = ok ? 'ok' : 'erro'; msg.textContent = ok ? 'Foto atualizada.' : 'Não foi possível salvar a foto no navegador.';
-      if (ok) { desenhar(); montarTopo(); }
-    } catch (err) { msg.textContent = err.message; }
-    e.target.value = '';
-  };
-  $('#btnRemoverFoto').onclick = () => { Conta.atualizar({ foto: null }); $('#msgFoto').textContent = ''; desenhar(); montarTopo(); };
 
   desenhar();
 }

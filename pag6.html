@@ -20,11 +20,45 @@
   <h1>Configurações</h1>
   <p class="sub">Gerencie sua conta, segurança e a forma como você usa o Pulso.</p>
 
+  <section class="bloco" id="perfil" aria-labelledby="tituloPerfil">
+    <h2 id="tituloPerfil">Perfil</h2>
+    <p class="sub">Sua foto, seu nome e os dados usados para calcular indicadores e metas.</p>
+    <div class="foto-perfil">
+      <div id="fotoPerfil"></div>
+      <div>
+        <button class="btn sec mini" id="btnFoto" type="button">Escolher foto</button>
+        <button class="btn perigo mini" id="btnRemoverFoto" type="button" hidden>Remover</button>
+        <input type="file" id="arqFoto" accept="image/*" hidden>
+        <p class="nota" style="margin:8px 0 0">A foto é recortada em quadrado e fica guardada só neste navegador.</p>
+      </div>
+    </div>
+    <p class="mensagem-config" id="msgFoto" role="status" aria-live="polite"></p>
+    <form id="formPerfil" novalidate>
+      <div class="field"><label for="nome">Nome completo</label><input type="text" id="nome" autocomplete="name" maxlength="60"></div>
+      <div class="row">
+        <div class="field"><label for="peso">Peso <span class="hint">(kg)</span></label>
+          <input type="number" id="peso" min="30" max="300" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label for="altura">Altura <span class="hint">(cm)</span></label>
+          <input type="number" id="altura" min="100" max="250" inputmode="numeric"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="objetivo">Objetivo</label><select id="objetivo"></select></div>
+        <div class="field"><label for="nivel">Nível atual</label><select id="nivel"></select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="esporte">Esporte principal</label><input type="text" id="esporte" maxlength="40"></div>
+        <div class="field"><label for="dias">Dias de treino por semana</label><select id="dias"></select></div>
+      </div>
+      <p class="mensagem-config" id="msgPerfil" role="status" aria-live="polite"></p>
+      <button class="btn" type="submit">Salvar perfil</button>
+    </form>
+  </section>
+
   <section class="bloco dicas-destaque" aria-labelledby="tituloDicas">
     <div class="dicas-icone" aria-hidden="true">💡</div>
     <div class="dicas-conteudo">
       <h2 id="tituloDicas">Dicas — aprenda a usar o Pulso</h2>
-      <p>Conheça as páginas, entenda para que serve cada função e veja onde encontrar cada recurso. Você pode avançar e voltar pelas explicações quando quiser.</p>
+      <p>O Pulso leva você até cada página e mostra, em balões, o que cada função faz e onde encontrá-la. Você pode avançar, voltar e sair quando quiser.</p>
       <button class="btn" id="iniciarTour" type="button">✨ Mostrar como o site funciona</button>
     </div>
   </section>
@@ -74,21 +108,22 @@
     <div class="preferencia-linha"><div><strong>Aparência</strong><p class="nota">Alterne entre o tema claro e escuro pelo botão de lua/sol no topo.</p></div><span aria-hidden="true">🌗</span></div>
     <div class="preferencia-linha"><div><strong>Ajuda e explicações</strong><p class="nota">Abra “Dicas” nesta página sempre que quiser relembrar como uma função funciona.</p></div><button class="btn sec mini" id="abrirDicasSecao" type="button">Ver dicas</button></div>
   </section>
-</main>
-
-<div class="tour-fundo" id="tourFundo" hidden>
-  <section class="tour-caixa" role="dialog" aria-modal="true" aria-labelledby="tourTitulo" aria-describedby="tourDescricao">
-    <div class="tour-topo"><span id="tourContador">Dicas do Pulso</span><button class="tour-fechar" id="fecharTour" type="button" aria-label="Fechar dicas">✕</button></div>
-    <div class="tour-progresso" aria-hidden="true"><span id="tourBarra"></span></div>
-    <div class="tour-simbolo" id="tourIcone" aria-hidden="true">👋</div>
-    <h2 id="tourTitulo">Bem-vindo ao Pulso!</h2>
-    <p id="tourDescricao">Vamos conhecer as funções do site.</p>
-    <div class="tour-dica" id="tourExemplo"></div>
-    <a class="btn sec tour-link" id="tourLink" href="pag2.html">Abrir esta página</a>
-    <div class="tour-acoes"><button class="btn sec" id="tourAnterior" type="button">Voltar</button><button class="btn" id="tourProximo" type="button">Próxima dica</button></div>
-    <p class="nota">Você pode fechar as dicas a qualquer momento e abri-las novamente nas Configurações.</p>
+  <section class="bloco" aria-labelledby="tituloApp">
+    <h2 id="tituloApp">Instalar como aplicativo</h2>
+    <p class="sub" id="appTxt"></p>
+    <button class="btn" id="btnInstalar" type="button" hidden>Instalar o Pulso</button>
   </section>
-</div>
+
+  <section class="bloco" aria-labelledby="tituloDados">
+    <h2 id="tituloDados">Seus dados</h2>
+    <p class="sub">Baixe uma cópia de tudo o que está guardado (conta, treinos, check-ins e medidas) ou apague sua conta.</p>
+    <p class="mensagem-config" id="msgDados" role="status" aria-live="polite"></p>
+    <div class="row">
+      <button class="btn sec" id="btnBackup" type="button">Baixar meus dados</button>
+      <button class="btn perigo" id="btnApagar" type="button">Apagar minha conta</button>
+    </div>
+  </section>
+</main>
 
 <script src="js/app.js"></script>
 <script>
@@ -102,6 +137,43 @@ function iniciarConfiguracoes(usuario) {
   function mensagem(id, texto, erro = false) {
     const campo = $(id); campo.textContent = texto; campo.classList.toggle('erro-config', erro); campo.classList.toggle('sucesso-config', !!texto && !erro);
   }
+
+  /* Perfil: foto e dados pessoais */
+  const O = CONFIG.opcoes;
+  preencher($('#objetivo'), O.objetivos); preencher($('#nivel'), O.niveis); preencher($('#dias'), [1, 2, 3, 4, 5, 6, 7]);
+  function desenharPerfil() {
+    const u = Conta.atual();
+    $('#fotoPerfil').textContent = ''; $('#fotoPerfil').append(avatar(u, true)); $('#btnRemoverFoto').hidden = !u.foto;
+    $('#nome').value = u.nome; $('#peso').value = u.peso; $('#altura').value = u.altura; $('#objetivo').value = u.objetivo;
+    $('#nivel').value = u.nivel; $('#esporte').value = u.esporte; $('#dias').value = u.dias;
+  }
+  $('#formPerfil').addEventListener('submit', e => {
+    e.preventDefault();
+    const nome = $('#nome').value.trim().replace(/\s+/g, ' ');
+    if (nome.length < 2) return mensagem('#msgPerfil', 'Digite seu nome.', true);
+    if (!$('#peso').value || !$('#peso').checkValidity()) return mensagem('#msgPerfil', 'Informe o peso em quilos (entre 30 e 300).', true);
+    if (!$('#altura').value || !$('#altura').checkValidity()) return mensagem('#msgPerfil', 'Informe a altura em centímetros (entre 100 e 250).', true);
+    if (!$('#esporte').value.trim()) return mensagem('#msgPerfil', 'Informe seu esporte principal.', true);
+    const ok = Conta.atualizar({
+      nome, peso: +$('#peso').value, altura: +$('#altura').value, objetivo: $('#objetivo').value,
+      nivel: $('#nivel').value, esporte: $('#esporte').value.trim(), dias: +$('#dias').value
+    });
+    mensagem('#msgPerfil', ok ? 'Perfil atualizado.' : 'Não foi possível salvar no navegador.', !ok);
+    if (ok) { desenharPerfil(); montarTopo(); }
+  });
+  $('#btnFoto').onclick = () => $('#arqFoto').click();
+  $('#arqFoto').onchange = async e => {
+    const arq = e.target.files[0];
+    if (!arq) return;
+    try {
+      const ok = await fotoParaDataURL(arq).then(f => Conta.atualizar({ foto: f }));
+      mensagem('#msgFoto', ok ? 'Foto atualizada.' : 'Não foi possível salvar a foto no navegador.', !ok);
+      if (ok) { desenharPerfil(); montarTopo(); }
+    } catch (err) { mensagem('#msgFoto', err.message, true); }
+    e.target.value = '';
+  };
+  $('#btnRemoverFoto').onclick = () => { Conta.atualizar({ foto: null }); mensagem('#msgFoto', 'Foto removida.'); desenharPerfil(); montarTopo(); };
+  desenharPerfil();
 
   $('#formEmail').addEventListener('submit', async e => {
     e.preventDefault();
@@ -138,36 +210,34 @@ function iniciarConfiguracoes(usuario) {
     Acessibilidade.salvar(Acessibilidade.padrao); mensagem('#msgAcessibilidade', 'Preferências padrão restauradas.');
   };
 
-  const dicas = [
-    { icone:'👋', titulo:'Bem-vindo ao Pulso!', descricao:'O Pulso ajuda você a registrar treinos e acompanhar hábitos ligados à saúde esportiva. Use estas dicas como um pequeno tour pelas páginas.', exemplo:'Você pode sair do tour quando quiser e voltar a ele por Configurações → Dicas.', link:'pag2.html', nome:'Ir ao Painel' },
-    { icone:'📊', titulo:'Painel: seu resumo diário', descricao:'O Painel reúne seus indicadores de sono, água, treinos e sequência. Também permite registrar um treino, consultar o calendário e ver os treinos recentes.', exemplo:'Para registrar: preencha o tipo de treino, data, duração e intensidade; depois toque em “Salvar treino”.', link:'pag2.html', nome:'Abrir Painel' },
-    { icone:'🌙', titulo:'Recuperação: como você está hoje', descricao:'A página Recuperação serve para fazer um check-in diário sobre sono, hidratação, energia, dores e esforço/descanso.', exemplo:'Preencha as respostas com sinceridade. Os registros ajudam você a observar padrões ao longo do tempo.', link:'pag4.html', nome:'Abrir Recuperação' },
-    { icone:'📈', titulo:'Evolução: acompanhe seu progresso', descricao:'Em Evolução e desempenho, compare sua atividade da semana e do mês, veja os minutos treinados e registre peso e medidas ao longo do tempo.', exemplo:'O gráfico de peso aparece quando existem pelo menos duas medidas registradas.', link:'pag5.html', nome:'Abrir Evolução' },
-    { icone:'❤️', titulo:'Minha saúde: dados e indicadores', descricao:'A página Minha saúde reúne informações do seu perfil e indicadores gerais, como IMC estimado e zonas de frequência cardíaca.', exemplo:'Esses cálculos são referências gerais e não substituem avaliação de um profissional de saúde.', link:'pag3.html', nome:'Abrir Minha saúde' },
-    { icone:'⚙️', titulo:'Configurações: controle sua conta', descricao:'Aqui você pode alterar o e-mail usado na conta, trocar a senha e ajustar a acessibilidade: tamanho do texto, contraste, sublinhado de links e redução de animações.', exemplo:'Depois de mudar as opções de acessibilidade, toque em “Salvar preferências”. Elas se aplicam às páginas do Pulso neste navegador.', link:'pag6.html', nome:'Voltar às Configurações' },
-    { icone:'🌗', titulo:'Tema claro e escuro', descricao:'O botão de lua ou sol no topo alterna entre tema claro e escuro. A escolha fica salva no navegador.', exemplo:'Escolha o tema que facilite a leitura no ambiente em que você está.', link:'pag6.html', nome:'Entendi' },
-    { icone:'🔐', titulo:'Privacidade e segurança', descricao:'Use uma senha forte e não compartilhe seu acesso. Como esta versão é um protótipo, os dados são guardados localmente no navegador e não sincronizam automaticamente com outros dispositivos.', exemplo:'Se limpar os dados do navegador, os registros locais podem ser perdidos. Uma versão publicada precisaria de um servidor seguro e fluxo de recuperação de conta.', link:'pag6.html', nome:'Concluir dicas' }
-  ];
-  let etapa = 0;
-  const fundo = $('#tourFundo');
-  function desenharDica() {
-    const d = dicas[etapa];
-    $('#tourContador').textContent = `Dica ${etapa + 1} de ${dicas.length}`;
-    $('#tourIcone').textContent = d.icone; $('#tourTitulo').textContent = d.titulo; $('#tourDescricao').textContent = d.descricao;
-    $('#tourExemplo').textContent = d.exemplo; $('#tourLink').href = d.link; $('#tourLink').textContent = d.nome;
-    $('#tourAnterior').disabled = etapa === 0;
-    $('#tourProximo').textContent = etapa === dicas.length - 1 ? 'Finalizar' : 'Próxima dica';
-    $('#tourBarra').style.width = ((etapa + 1) / dicas.length * 100) + '%';
+  /* Seus dados e aplicativo */
+  $('#btnBackup').onclick = () => {
+    const { sal, hash, ...perfil } = Conta.atual();
+    const dados = { conta: perfil, treinos: Treinos.listar(), checkins: Checkins.listar(), medidas: Medidas.listar() };
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const a = el('a'); a.href = URL.createObjectURL(blob); a.download = 'pulso-meus-dados.json';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    mensagem('#msgDados', 'Arquivo pulso-meus-dados.json baixado.');
+  };
+  $('#btnApagar').onclick = () => {
+    if (confirm('Apagar sua conta e todos os seus registros (treinos, check-ins e medidas)? Isso não pode ser desfeito.')) Conta.apagar();
+  };
+
+  function atualizarApp() {
+    const txt = $('#appTxt'), btn = $('#btnInstalar');
+    if (modoApp()) { txt.textContent = 'Você já está usando o Pulso como aplicativo.'; btn.hidden = true; return; }
+    btn.hidden = !convitePwa;
+    txt.textContent = convitePwa
+      ? 'Instale para abrir o Pulso direto da tela inicial, em tela cheia e até sem internet.'
+      : 'iPhone: toque em Compartilhar e depois em "Adicionar à Tela de Início". Android: abra o menu do navegador e escolha "Instalar aplicativo". Computador: use o ícone de instalar na barra de endereço. O site precisa estar em um endereço seguro (https).';
   }
-  function abrirTour() { etapa = 0; desenharDica(); fundo.hidden = false; document.body.classList.add('tour-aberto'); $('#fecharTour').focus(); }
-  function fecharTour() { fundo.hidden = true; document.body.classList.remove('tour-aberto'); $('#iniciarTour').focus(); }
-  $('#iniciarTour').onclick = abrirTour;
-  $('#abrirDicasSecao').onclick = abrirTour;
-  $('#fecharTour').onclick = fecharTour;
-  $('#tourAnterior').onclick = () => { if (etapa > 0) { etapa--; desenharDica(); } };
-  $('#tourProximo').onclick = () => { if (etapa < dicas.length - 1) { etapa++; desenharDica(); } else fecharTour(); };
-  fundo.addEventListener('click', e => { if (e.target === fundo) fecharTour(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !fundo.hidden) fecharTour(); });
+  document.addEventListener('convite-app', atualizarApp);
+  $('#btnInstalar').onclick = async () => { await instalarApp(); atualizarApp(); };
+  atualizarApp();
+
+  $('#iniciarTour').onclick = () => Tour.iniciar();   // o roteiro fica em Tour (js/app.js)
+  $('#abrirDicasSecao').onclick = () => Tour.iniciar();
 }
 </script>
 </body>

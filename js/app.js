@@ -7,9 +7,10 @@
 const CONFIG = {
   nomeSite: 'Pulso',
   idadeMinima: 14,
-  paginas: { login: 'pag1.html', painel: 'pag2.html', saude: 'pag3.html' },
-  chaves: { usuarios: 'pulso_usuarios', sessao: 'pulso_sessao', treinos: 'pulso_treinos', checkins: 'pulso_checkins', medidas: 'pulso_medidas', tema: 'pulso_tema' },
+  paginas: { login: 'pag1.html', painel: 'pag2.html', saude: 'pag3.html', config: 'pag6.html', perfil: 'pag6.html#perfil' },
+  chaves: { usuarios: 'pulso_usuarios', sessao: 'pulso_sessao', treinos: 'pulso_treinos', checkins: 'pulso_checkins', medidas: 'pulso_medidas', tema: 'pulso_tema', acessibilidade: 'pulso_acessibilidade' },
   menu: [['pag2.html', 'Painel', '📊'], ['pag4.html', 'Recuperação', '🌙'], ['pag5.html', 'Evolução', '📈'], ['pag3.html', 'Minha saúde', '❤️']],
+  menuRodape: [['pag6.html', 'Configurações', '⚙️']],   // fica na parte de baixo do menu lateral
   condicoesRisco: ['Problema cardíaco', 'Pressão alta'],
   // Aplicativo instalável: o service worker só liga em https (ou aqui, se serviceWorkerEmLocalhost for true).
   // Deixe false enquanto edita o site, para o navegador não guardar arquivos antigos.
@@ -51,6 +52,32 @@ const Store = {
   gravar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
   remover(k) { try { localStorage.removeItem(k); } catch {} }
 };
+
+/* ---------- Acessibilidade (Configurações) ----------
+   As preferências viram atributos no <html> (data-fonte, data-contraste, data-links, data-movimento)
+   e o estilo.css reage a eles. É aplicada assim que o app.js carrega, em todas as páginas. */
+const Acessibilidade = {
+  padrao: { fonte: 'normal', contraste: false, sublinharLinks: false, reduzirMovimento: false },
+  ler() {
+    const o = { ...this.padrao, ...Store.ler(CONFIG.chaves.acessibilidade, {}) };
+    if (!['normal', 'grande', 'maior'].includes(o.fonte)) o.fonte = 'normal';
+    return o;
+  },
+  aplicar(o = this.ler()) {
+    const h = document.documentElement.dataset;
+    h.fonte = o.fonte;
+    const ligar = (chave, ligado, valor) => { if (ligado) h[chave] = valor; else delete h[chave]; };
+    ligar('contraste', o.contraste, 'alto');
+    ligar('links', o.sublinharLinks, 'sim');
+    ligar('movimento', o.reduzirMovimento, 'reduzido');
+  },
+  salvar(o) {
+    const ok = Store.gravar(CONFIG.chaves.acessibilidade, { ...this.padrao, ...o });
+    this.aplicar();
+    return ok;
+  }
+};
+Acessibilidade.aplicar();
 
 /* ---------- Datas (formato interno AAAA-MM-DD) ---------- */
 const Datas = {
@@ -109,6 +136,32 @@ const Conta = {
     const todos = this.todos(); todos[u.email] = { ...u, ...campos };
     return Store.gravar(CONFIG.chaves.usuarios, todos);
   },
+  async alterarEmail(novo) {
+    const u = this.atual();
+    if (!u) return { ok: false, erro: 'Sua sessão terminou. Entre novamente.' };
+    novo = novo.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novo)) return { ok: false, erro: 'Digite um e-mail válido.' };
+    if (novo === u.email) return { ok: false, erro: 'Esse já é o e-mail da sua conta.' };
+    const todos = this.todos();
+    if (todos[novo]) return { ok: false, erro: 'Já existe uma conta com esse e-mail.' };
+    todos[novo] = { ...u, email: novo }; delete todos[u.email];
+    if (!Store.gravar(CONFIG.chaves.usuarios, todos)) return { ok: false, erro: 'Não foi possível salvar no navegador.' };
+    ['treinos', 'checkins', 'medidas'].forEach(k => {   // os registros acompanham o novo e-mail
+      const c = Store.ler(CONFIG.chaves[k], {});
+      if (c[u.email]) { c[novo] = c[u.email]; delete c[u.email]; Store.gravar(CONFIG.chaves[k], c); }
+    });
+    Store.gravar(CONFIG.chaves.sessao, novo);
+    return { ok: true, mensagem: 'E-mail atualizado neste navegador.' };
+  },
+  async alterarSenha(atual, nova) {
+    const u = this.atual();
+    if (!u) return { erro: 'Sua sessão terminou. Entre novamente.' };
+    if (await this.hash(atual, u.sal) !== u.hash) return { erro: 'A senha atual está incorreta.' };
+    if (nova.length < 8) return { erro: 'A nova senha precisa ter pelo menos 8 caracteres.' };
+    if (nova === atual) return { erro: 'A nova senha precisa ser diferente da atual.' };
+    const sal = this.sal();
+    return this.atualizar({ sal, hash: await this.hash(nova, sal) }) ? true : { erro: 'Não foi possível salvar no navegador.' };
+  },
   sair() { Store.remover(CONFIG.chaves.sessao); location.href = CONFIG.paginas.login; },
   apagar() {
     const u = this.atual(); if (!u) return;
@@ -128,6 +181,12 @@ const Treinos = {
   totais(ini, fim) {
     const l = this.listar().filter(t => t.data >= ini && t.data <= fim);
     return { min: l.reduce((s, t) => s + t.min, 0), dias: new Set(l.map(t => t.data)).size, treinos: l.length };
+  },
+  semanasSeguidas(meta) {   // semanas (segunda a domingo) seguidas com pelo menos `meta` dias de treino; a semana atual só entra se já cumpriu a meta
+    const cumpriu = n => this.totais(Datas.segunda(n), Datas.soma(Datas.segunda(n), 6)).dias >= meta;
+    let total = cumpriu(0) ? 1 : 0, k = 1;
+    while (k < 520 && cumpriu(k)) { total++; k++; }
+    return total;
   },
   minutosPorDia() { const m = {}; this.listar().forEach(t => m[t.data] = (m[t.data] || 0) + t.min); return m; },
   sequencia() {
@@ -173,6 +232,27 @@ function avatar(u, grande) {
   return a;
 }
 
+/* Grupo de botões de escolha única: troca um <select> quando há poucas opções.
+   opcoes: lista de valores, ou de [valor, texto]. Devolve { valor, definir(v) }; definir(null) desmarca tudo. */
+function grupoChips(box, opcoes, { inicial = null, rotulo = '', aoMudar } = {}) {
+  box.textContent = ''; box.className = 'chips'; box.setAttribute('role', 'radiogroup');
+  if (rotulo) box.setAttribute('aria-label', rotulo);
+  const g = { valor: null };
+  const botoes = opcoes.map(o => {
+    const [valor, texto] = Array.isArray(o) ? o : [o, o], b = el('button', String(texto), 'chip');
+    b.type = 'button'; b.setAttribute('role', 'radio'); b._valor = valor;
+    b.onclick = () => g.definir(valor);
+    box.append(b); return b;
+  });
+  g.definir = (v, silencioso) => {
+    g.valor = v;
+    botoes.forEach(b => b.setAttribute('aria-checked', b._valor === v));
+    if (!silencioso && aoMudar) aoMudar(v);
+  };
+  g.definir(inicial, true);
+  return g;
+}
+
 /* Monta o menu lateral (no celular vira barra inferior) e a barra do topo. Pode ser chamada de novo para atualizar o avatar. */
 function montarTopo() {
   const t = $('#topo'), u = Conta.atual(), pag = location.pathname.split('/').pop();
@@ -183,14 +263,14 @@ function montarTopo() {
     const lateral = el('aside', null, 'lateral'), nav = el('nav');
     nav.setAttribute('aria-label', 'Principal');
     lateral.append(el('div', CONFIG.nomeSite, 'logo'), nav);
-    CONFIG.menu.forEach(([href, txt, ico]) => {
-      const a = el('a'); a.href = href; a.append(el('span', ico, 'ico'), el('span', txt));
+    [...CONFIG.menu, ...CONFIG.menuRodape.map(i => [...i, true])].forEach(([href, txt, ico, rodape]) => {
+      const a = el('a', null, rodape ? 'rodape' : ''); a.href = href; a.append(el('span', ico, 'ico'), el('span', txt));
       if (href === pag) a.setAttribute('aria-current', 'page');
       nav.append(a);
     });
     col.before(lateral);
   }
-  const perfil = el('a', null, 'perfil'); perfil.href = CONFIG.paginas.saude; perfil.setAttribute('aria-label', 'Minha conta');
+  const perfil = el('a', null, 'perfil'); perfil.href = CONFIG.paginas.perfil; perfil.setAttribute('aria-label', 'Minha conta');
   perfil.append(avatar(u), el('span', u.nome.split(' ')[0]));
   const sair = el('button', 'Sair', 'btn sec mini'); sair.type = 'button'; sair.onclick = () => Conta.sair();
   t.append(el('div', CONFIG.nomeSite, 'logo mobile'), botaoTema(), perfil, sair);
@@ -300,3 +380,124 @@ function ativarSenhas() {
     b.textContent = oculto ? 'Ocultar' : 'Mostrar';
   });
 }
+
+/* ---------- Dicas guiadas (Configurações → Dicas) ----------
+   Leva a pessoa até cada página e mostra balões apontando para as funções.
+   Para mudar o roteiro, edite a lista PASSOS: pag = página, alvo = seletor CSS do que será destacado
+   (sem alvo, o balão aparece no centro). O passo atual fica na sessão (sessionStorage) enquanto o tour roda. */
+const Tour = {
+  chave: 'pulso_tour',
+  passos: [
+    { pag: 'pag2.html', icone: '👋', titulo: 'Bem-vindo ao Pulso!', texto: 'Vou levar você por cada página e mostrar, em balões, o que cada função faz. Use "Próxima" para avançar e "Voltar" para rever. Você pode sair quando quiser.' },
+    { pag: 'pag2.html', alvo: '.lateral nav', icone: '🧭', titulo: 'Menu principal', texto: 'Por aqui você troca de página: Painel, Recuperação, Evolução, Minha saúde e Configurações. No celular, o menu fica na barra de baixo.' },
+    { pag: 'pag2.html', alvo: '#topo .tema', icone: '🌗', titulo: 'Tema claro e escuro', texto: 'Este botão alterna entre o tema claro e o escuro. A escolha fica salva neste navegador.' },
+    { pag: 'pag2.html', alvo: '#topo .perfil', icone: '👤', titulo: 'Seu perfil', texto: 'Sua foto e seu nome levam ao Perfil, em Configurações, onde você troca a foto e atualiza peso, altura e objetivo.' },
+    { pag: 'pag2.html', alvo: '.saudacao', icone: '🎯', titulo: 'Meta da semana', texto: 'A barra mostra quantos dias você treinou em relação à meta de dias por semana que escolheu no cadastro.' },
+    { pag: 'pag2.html', alvo: '.metricas', icone: '📊', titulo: 'Indicadores do dia', texto: 'Sono e água vêm do check-in de recuperação. "Treinos na semana" e "Semanas seguidas" (semanas em que você cumpriu a meta) vêm dos treinos que você registra.', exemplo: 'A referência de água é de cerca de 35 ml por quilo do seu peso.' },
+    { pag: 'pag2.html', alvo: '#registrar', icone: '🏃', titulo: 'Registrar treino', texto: 'Toque no esporte, na duração e na intensidade e depois em "Salvar treino". O esporte do seu cadastro já vem escolhido. Ele entra nos indicadores, no calendário e nos gráficos na hora.', exemplo: 'Use "Repetir último" para salvar um treino igual ao anterior com um toque.' },
+    { pag: 'pag2.html', alvo: '#calGrade', icone: '📅', titulo: 'Calendário', texto: 'Os dias em que você treinou ficam coloridos: quanto mais escuro, mais minutos. Toque em um dia para ver os treinos dele e adicionar um treino naquela data. No celular aparece a semana; dá para ver o mês inteiro.' },
+    { pag: 'pag2.html', alvo: '#chips', icone: '📈', titulo: 'Análise da semana', texto: 'Escolha Treino, Água ou Sono para ver as barras de cada dia da semana atual.' },
+    { pag: 'pag4.html', alvo: '#hoje', icone: '🌙', titulo: 'Recuperação: resumo de hoje', texto: 'Aqui aparecem o sono, a água e a energia que você registrou hoje, com a barra de hidratação.' },
+    { pag: 'pag4.html', alvo: '#formCheck', icone: '📝', titulo: 'Check-in do dia', texto: 'Registre sono, água, energia, dor muscular e esforço do treino. Marque "dia de descanso" quando não treinar. Dá para escolher outra data e corrigir um dia que já salvou.', exemplo: 'Quanto mais dias registrados, mais úteis ficam as médias dos últimos 7 dias.' },
+    { pag: 'pag5.html', alvo: '#cmpSemana', icone: '📊', titulo: 'Comparar períodos', texto: 'Compare minutos, dias de treino e número de treinos da semana e do mês atuais com o período anterior completo.' },
+    { pag: 'pag5.html', alvo: '#formMed', icone: '⚖️', titulo: 'Peso e medidas', texto: 'Registre seu peso (e a cintura, se quiser). O peso mais recente atualiza o IMC em Minha saúde, e o gráfico de peso aparece com duas ou mais medidas.' },
+    { pag: 'pag3.html', alvo: '#indicadores', icone: '❤️', titulo: 'Seus indicadores', texto: 'IMC, frequência cardíaca máxima estimada e água por dia, calculados com os seus dados. São referências gerais e não substituem um profissional de saúde.' },
+    { pag: 'pag3.html', alvo: '#zonas', icone: '💓', titulo: 'Zonas de frequência cardíaca', texto: 'Faixas de batimentos para cada intensidade de treino, da recuperação ao esforço máximo. Use o relógio ou a contagem manual do pulso para saber em qual você está.' },
+    { pag: 'pag6.html', alvo: '#perfil', icone: '🪪', titulo: 'Perfil', texto: 'Troque sua foto e atualize nome, peso, altura, objetivo, esporte e dias de treino. Os indicadores se ajustam sozinhos.' },
+    { pag: 'pag6.html', alvo: '[aria-labelledby="tituloAcessibilidade"]', icone: '♿', titulo: 'Acessibilidade', texto: 'Aumente o texto, ligue o alto contraste, sublinhe os links ou reduza as animações. Toque em "Salvar preferências" para aplicar em todas as páginas.' },
+    { pag: 'pag6.html', alvo: '[aria-labelledby="tituloApp"]', icone: '📲', titulo: 'Instalar como aplicativo', texto: 'Instale o Pulso na tela inicial do celular ou do computador para abrir em tela cheia. As instruções mudam conforme o aparelho.' },
+    { pag: 'pag6.html', alvo: '[aria-labelledby="tituloDados"]', icone: '🔐', titulo: 'Seus dados', texto: 'Baixe uma cópia dos seus dados ou apague a conta. Neste protótipo os dados ficam só neste navegador e não passam para outros aparelhos.' },
+    { pag: 'pag6.html', icone: '✅', titulo: 'Pronto!', texto: 'Você conheceu todas as páginas do Pulso. Para rever as dicas, volte a Configurações e toque em "Mostrar como o site funciona".' }
+  ],
+  balao: null, alvo: null, n: 0,
+  _pagina() { return location.pathname.split('/').pop() || 'index.html'; },
+  _ler() {
+    try { const n = JSON.parse(sessionStorage.getItem(this.chave)); return Number.isInteger(n) && n >= 0 && n < this.passos.length ? n : null; } catch { return null; }
+  },
+  _gravar(n) { try { if (n === null) sessionStorage.removeItem(this.chave); else sessionStorage.setItem(this.chave, JSON.stringify(n)); } catch {} },
+
+  iniciar() { this.ir(0); },
+  ir(n) {                       // vai para o passo n, mudando de página se for preciso
+    this._gravar(n);
+    if (this.passos[n].pag !== this._pagina()) location.href = this.passos[n].pag;
+    else this.mostrar(n);
+  },
+  retomar() {                   // chamado ao carregar cada página
+    const n = this._ler();
+    if (n === null) return;
+    if (this.passos[n].pag !== this._pagina()) { this._gravar(null); return; }   // a pessoa saiu do roteiro por conta própria
+    this.mostrar(n);
+  },
+  sair() {
+    this._gravar(null);
+    if (this.alvo) this.alvo.classList.remove('tour-alvo');
+    if (this.balao) this.balao.remove();
+    this.balao = this.alvo = null;
+  },
+
+  mostrar(n) {
+    const p = this.passos[n], total = this.passos.length;
+    this.n = n;
+    if (this.alvo) this.alvo.classList.remove('tour-alvo');
+    this.alvo = p.alvo ? $(p.alvo) : null;
+    if (this.alvo && !this.alvo.getClientRects().length) this.alvo = null;   // alvo escondido: balão no centro
+    if (this.alvo) this.alvo.classList.add('tour-alvo');
+
+    if (!this.balao) {
+      const b = el('div', null, 'tour-balao');
+      b.setAttribute('role', 'dialog'); b.setAttribute('aria-labelledby', 'tourTitulo'); b.setAttribute('aria-describedby', 'tourTexto');
+      b.tabIndex = -1;
+      document.body.append(b); this.balao = b;
+      b.addEventListener('keydown', e => { if (e.key === 'Escape') this.sair(); });
+      addEventListener('resize', () => this.balao && this.posicionar());
+      addEventListener('scroll', () => this.balao && this.posicionar(), { passive: true });
+    }
+    const b = this.balao; b.textContent = '';
+    const fechar = el('button', '✕', 'tour-fechar'); fechar.type = 'button'; fechar.setAttribute('aria-label', 'Sair das dicas'); fechar.onclick = () => this.sair();
+    const topo = el('div', null, 'tour-topo'); topo.append(el('span', 'Dica ' + (n + 1) + ' de ' + total), fechar);
+    const prog = el('div', null, 'tour-progresso'), barra = el('span'); barra.style.width = ((n + 1) / total * 100) + '%'; prog.append(barra); prog.setAttribute('aria-hidden', 'true');
+    const tit = el('h2', p.titulo); tit.id = 'tourTitulo';
+    const txt = el('p', p.texto); txt.id = 'tourTexto';
+    const volta = el('button', 'Voltar', 'btn sec'), avanca = el('button', n === total - 1 ? 'Concluir' : 'Próxima', 'btn');
+    volta.type = avanca.type = 'button'; volta.disabled = n === 0;
+    volta.onclick = () => this.ir(n - 1);
+    avanca.onclick = () => n === total - 1 ? this.sair() : this.ir(n + 1);
+    const acoes = el('div', null, 'tour-acoes'); acoes.append(volta, avanca);
+    b.append(el('span', null, 'tour-seta'), topo, prog, el('div', p.icone, 'tour-simbolo'), tit, txt);
+    if (p.exemplo) b.append(el('p', p.exemplo, 'tour-dica'));
+    b.append(acoes);
+
+    if (this.alvo && getComputedStyle(this.alvo).position !== 'fixed') {   // traz o alvo para a tela (sem animar)
+      const alto = this.alvo.getBoundingClientRect().height > innerHeight * 0.7;
+      this.alvo.scrollIntoView({ block: matchMedia('(max-width:820px)').matches || alto ? 'start' : 'center', behavior: 'auto' });
+    }
+    this.posicionar();
+    b.focus({ preventScroll: true });
+  },
+
+  /* Coloca o balão perto do alvo (celular: faixa fixa acima do menu de baixo; sem alvo: centro da tela) */
+  posicionar() {
+    const b = this.balao, folga = 12;
+    b.style.cssText = ''; b.className = 'tour-balao'; b.removeAttribute('data-lado');
+    if (!this.alvo) { b.classList.add('centro'); return; }
+    if (matchMedia('(max-width:820px)').matches) { b.classList.add('movel'); return; }
+    const r = this.alvo.getBoundingClientRect(), bw = Math.min(380, innerWidth - 2 * folga), bh = b.offsetHeight, v = innerHeight, l = innerWidth;
+    const limita = (x, min, max) => Math.max(min, Math.min(max, x));
+    let top, left, lado = null;
+    b.style.width = bw + 'px';
+    if (v - r.bottom >= bh + 24) { top = r.bottom + 14; lado = 'cima'; }
+    else if (r.top >= bh + 24) { top = r.top - bh - 14; lado = 'baixo'; }
+    else if (l - r.right >= bw + 24) { left = r.right + 16; top = limita(r.top, folga, v - bh - folga); lado = 'esquerda'; }
+    else if (r.left >= bw + 24) { left = r.left - bw - 16; top = limita(r.top, folga, v - bh - folga); lado = 'direita'; }
+    else top = v - bh - 16;                      // alvo muito grande: balão sobre a parte de baixo dele
+    if (left === undefined) left = limita(r.left + r.width / 2 - bw / 2, folga, l - bw - folga);
+    b.style.top = top + 'px'; b.style.left = left + 'px';
+    const seta = $('.tour-seta', b);
+    if (lado) {
+      b.dataset.lado = lado;
+      if (lado === 'cima' || lado === 'baixo') seta.style.left = limita(r.left + r.width / 2 - left - 8, 18, bw - 34) + 'px';
+      else seta.style.top = limita(r.top + Math.min(r.height, 80) / 2 - top - 8, 18, bh - 34) + 'px';
+    }
+  }
+};
+window.addEventListener('load', () => Tour.retomar());

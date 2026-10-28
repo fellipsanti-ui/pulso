@@ -36,7 +36,7 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
       <div><b id="mAgua">-</b><small id="mAguaSub"></small></div><div class="meta"><div id="bAgua"></div></div></div>
     <div class="metrica"><div class="cab"><span class="icone">🏃</span>Treinos na semana</div>
       <div><b id="mTreinos">0</b><small id="mTreinosSub"></small></div><div class="meta"><div id="bTreinos"></div></div></div>
-    <div class="metrica"><div class="cab"><span class="icone" style="--c:var(--laranja)">🔥</span>Sequência</div>
+    <div class="metrica"><div class="cab"><span class="icone" style="--c:var(--laranja)">🔥</span>Semanas seguidas</div>
       <div><b id="mSeq">0</b><small id="mSeqSub"></small></div><div class="meta"><div id="bSeq"></div></div></div>
   </div>
 
@@ -44,28 +44,32 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
     <section class="bloco" id="registrar">
       <h2>Registrar treino</h2>
       <form id="formTreino" novalidate>
-        <div class="field"><label for="tTipo">O que você treinou?</label>
-          <input type="text" id="tTipo" placeholder="Ex.: corrida, musculação, futebol" maxlength="40"></div>
-        <div class="row">
-          <div class="field"><label for="tData">Data</label><input type="date" id="tData"></div>
-          <div class="field"><label for="tMin">Duração (min)</label><input type="number" id="tMin" min="5" max="600" inputmode="numeric"></div>
-        </div>
-        <div class="field"><label for="tInt">Intensidade</label><select id="tInt"></select></div>
-        <div class="field"><label for="tObs">Observações <span class="hint">(opcional)</span></label>
+        <div class="field"><span class="legend">O que você treinou?</span><div id="gEsporte"></div>
+          <input type="text" id="tTipo" placeholder="Qual esporte ou atividade?" maxlength="40" aria-label="Qual esporte ou atividade?" hidden></div>
+        <div class="field"><span class="legend">Quanto tempo?</span><div id="gDuracao"></div>
+          <input type="number" id="tMin" min="5" max="600" inputmode="numeric" placeholder="Minutos (5 a 600)" aria-label="Duração em minutos" hidden></div>
+        <div class="field"><span class="legend">Intensidade</span><div id="gInt"></div></div>
+        <div class="field"><span class="legend">Quando?</span><div id="gQuando"></div>
+          <input type="date" id="tData" aria-label="Data do treino" hidden></div>
+        <button class="link-btn" id="btnObs" type="button" aria-expanded="false" aria-controls="campoObs">+ Adicionar observação</button>
+        <div class="field" id="campoObs" hidden><label for="tObs">Observações</label>
           <textarea id="tObs" maxlength="200" placeholder="Como se sentiu? Alguma dor?"></textarea></div>
-        <p class="erro" id="erroTreino" role="alert"></p>
+        <p id="msgTreino" role="status" aria-live="polite"></p>
         <button class="btn" type="submit">Salvar treino</button>
+        <button class="btn sec" id="btnRepetir" type="button" style="margin-top:10px" hidden></button>
       </form>
     </section>
 
     <section class="bloco">
       <div class="cal-topo">
-        <button id="calAnt" type="button" aria-label="Mês anterior">‹</button>
+        <button id="calAnt" type="button" aria-label="Anterior">‹</button>
         <h2 id="calTitulo"></h2>
-        <button id="calProx" type="button" aria-label="Próximo mês">›</button>
+        <button id="calProx" type="button" aria-label="Próximo">›</button>
       </div>
+      <div class="chips cal-acoes"><button class="chip" id="calHoje" type="button">Hoje</button><button class="chip" id="calModo" type="button"></button></div>
       <div class="cal" id="calGrade"></div>
-      <p class="nota" style="margin-bottom:0">Os dias em verde-claro são dias em que você treinou.</p>
+      <div class="cal-legenda" aria-hidden="true"><span><i class="n1"></i>até 29 min</span><span><i class="n2"></i>30 a 59 min</span><span><i class="n3"></i>60 min ou mais</span></div>
+      <div class="dia-detalhe" id="diaSel" aria-live="polite"></div>
     </section>
   </div>
 
@@ -73,7 +77,7 @@ try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso
     <section class="bloco">
       <h2>Últimos treinos</h2>
       <ul class="lista" id="lista"></ul>
-      <p class="vazio" id="vazio">Nenhum treino registrado ainda. Salve o primeiro com o botão +.</p>
+      <p class="vazio" id="vazio">Nenhum treino registrado ainda. Salve o primeiro ao lado.</p>
     </section>
 
     <section class="bloco">
@@ -101,27 +105,138 @@ function iniciar(u) {
   const O = CONFIG.opcoes, meta = u.dias || 3, hora = new Date().getHours();
   $('#ola').textContent = (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + u.nome.split(' ')[0] + '!';
   $('#avisoMedico').hidden = !Saude.precisaMedico(u);
-  preencher($('#tInt'), O.intensidades); $('#tInt').value = O.intensidades[1];
-  $('#tData').value = $('#tData').max = Datas.hoje();
-  $('.fab').onclick = () => setTimeout(() => $('#tTipo').focus(), 400);
+  $('.fab').onclick = () => setTimeout(() => $('#gDuracao .chip').focus({ preventScroll: true }), 400);
 
-  let serie = 'min', mes = new Date(); mes.setDate(1);
+  const NOMES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const barra = (id, pct) => { $(id).style.width = Math.max(0, Math.min(100, pct)) + '%'; };
+  const dataDe = iso => new Date(iso + 'T12:00:00');
+  const reduz = () => document.documentElement.dataset.movimento === 'reduzido' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ontem = () => Datas.soma(Datas.hoje(), -1);
+
+  /* ----- Registrar treino: botões em vez de campos para digitar ----- */
+  const ESPORTES = ['Corrida', 'Musculação', 'Futebol', 'Caminhada', 'Ciclismo', 'Natação'];
+  const meu = (u.esporte || '').trim();
+  const esportes = [...(meu ? [meu.charAt(0).toUpperCase() + meu.slice(1)] : []), ...ESPORTES]
+    .filter((e, i, l) => l.findIndex(x => x.toLowerCase() === e.toLowerCase()) === i);   // o esporte do cadastro vem primeiro
+  const gEsporte = grupoChips($('#gEsporte'), [...esportes, ['__outro', 'Outro']], { rotulo: 'Esporte ou atividade', inicial: esportes[0],
+    aoMudar: v => { $('#tTipo').hidden = v !== '__outro'; if (v === '__outro') $('#tTipo').focus(); } });
+  const gDuracao = grupoChips($('#gDuracao'), [[30, '30 min'], [45, '45 min'], [60, '1 h'], [90, '1 h 30'], ['outro', 'Outro']], { rotulo: 'Duração',
+    aoMudar: v => { $('#tMin').hidden = v !== 'outro'; if (v === 'outro') $('#tMin').focus(); } });
+  const gInt = grupoChips($('#gInt'), O.intensidades, { rotulo: 'Intensidade', inicial: O.intensidades[1] });
+  const gQuando = grupoChips($('#gQuando'), [['hoje', 'Hoje'], ['ontem', 'Ontem'], ['outra', 'Outra data']], { rotulo: 'Quando foi o treino', inicial: 'hoje',
+    aoMudar: v => { $('#tData').hidden = v !== 'outra'; if (v === 'outra') $('#tData').focus(); } });
+  $('#tData').max = $('#tData').value = Datas.hoje();
+
+  const dataEscolhida = () => gQuando.valor === 'hoje' ? Datas.hoje() : gQuando.valor === 'ontem' ? ontem() : $('#tData').value;
+  const minutos = () => gDuracao.valor === 'outro' ? +$('#tMin').value : gDuracao.valor;
+  function definirData(iso) {
+    $('#tData').value = iso;
+    gQuando.definir(iso === Datas.hoje() ? 'hoje' : iso === ontem() ? 'ontem' : 'outra');
+  }
+  const aviso = (txt, ok) => { const p = $('#msgTreino'); p.textContent = txt; p.className = ok ? 'ok' : 'erro'; };
+
+  $('#btnObs').onclick = () => {
+    const abrir = $('#campoObs').hidden;
+    $('#campoObs').hidden = !abrir; $('#btnObs').setAttribute('aria-expanded', abrir);
+    $('#btnObs').textContent = abrir ? '− Ocultar observação' : '+ Adicionar observação';
+    if (abrir) $('#tObs').focus();
+  };
+
+  const ultimo = () => [...Treinos.listar()].sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id)[0];
+  function atualizarRepetir() {
+    const t = ultimo(), b = $('#btnRepetir');
+    b.hidden = !t;
+    if (t) b.textContent = 'Repetir último: ' + t.tipo + ', ' + t.min + ' min';
+  }
+  $('#btnRepetir').onclick = () => {
+    const t = ultimo(); if (!t) return;
+    if (!Treinos.adicionar({ tipo: t.tipo, data: Datas.hoje(), min: t.min, intensidade: t.intensidade, obs: '' })) { aviso('Não foi possível salvar no navegador.'); return; }
+    aviso('Treino repetido para hoje.', true);
+    selecionado = Datas.hoje(); ref = new Date(); desenhar();
+  };
+
+  $('#formTreino').onsubmit = e => {
+    e.preventDefault();
+    const tipo = (gEsporte.valor === '__outro' ? $('#tTipo').value : gEsporte.valor || '').trim(), data = dataEscolhida(), min = minutos();
+    if (!tipo) { aviso('Diga o que você treinou.'); $('#tTipo').focus(); return; }
+    if (gDuracao.valor === null) { aviso('Escolha quanto tempo durou o treino.'); $('#gDuracao .chip').focus(); return; }
+    if (!(min >= 5 && min <= 600)) { aviso('Informe a duração entre 5 e 600 minutos.'); $('#tMin').focus(); return; }
+    if (!data || data > Datas.hoje()) { aviso('Escolha uma data de hoje ou anterior.'); $('#tData').focus(); return; }
+    if (!Treinos.adicionar({ tipo, data, min, intensidade: gInt.valor, obs: $('#tObs').value.trim() })) { aviso('Não foi possível salvar no navegador.'); return; }
+    gDuracao.definir(null); $('#tMin').value = ''; $('#tObs').value = ''; $('#tTipo').value = '';
+    if (!$('#campoObs').hidden) $('#btnObs').click();
+    definirData(Datas.hoje());
+    aviso('Treino salvo!', true);
+    selecionado = data; ref = dataDe(data); desenhar();
+  };
+
+  /* ----- Calendário: semana (celular) ou mês; toque em um dia para ver e adicionar treinos ----- */
+  let ref = new Date(), selecionado = Datas.hoje(), modo = matchMedia('(max-width:820px)').matches ? 'semana' : 'mes';
 
   function calendario(minDia) {
-    const nomes = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-    $('#calTitulo').textContent = nomes[mes.getMonth()] + ' de ' + mes.getFullYear();
     const g = $('#calGrade'); g.textContent = '';
-    ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].forEach(l => g.append(el('span', l, 'dia-sem')));
-    for (let i = 0; i < (mes.getDay() + 6) % 7; i++) g.append(el('span'));
-    for (let d = 1, total = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate(); d <= total; d++) {
-      const iso = Datas.iso(new Date(mes.getFullYear(), mes.getMonth(), d));
-      const c = el('span', d, 'dia' + (minDia[iso] ? ' treinou' : '') + (iso === Datas.hoje() ? ' hoje' : ''));
-      if (minDia[iso]) c.title = minDia[iso] + ' min';
-      g.append(c);
+    let dias;
+    if (modo === 'mes') {
+      $('#calTitulo').textContent = NOMES[ref.getMonth()] + ' de ' + ref.getFullYear();
+      dias = Array.from({ length: new Date(ref.getFullYear(), ref.getMonth() + 1, 0).getDate() }, (_, i) => new Date(ref.getFullYear(), ref.getMonth(), i + 1));
+    } else {
+      const ini = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() - ((ref.getDay() + 6) % 7));
+      dias = Array.from({ length: 7 }, (_, i) => new Date(ini.getFullYear(), ini.getMonth(), ini.getDate() + i));
+      $('#calTitulo').textContent = dias[0].getDate() + ' ' + MESES[dias[0].getMonth()] + ' a ' + dias[6].getDate() + ' ' + MESES[dias[6].getMonth()];
     }
+    $('#calAnt').setAttribute('aria-label', modo === 'mes' ? 'Mês anterior' : 'Semana anterior');
+    $('#calProx').setAttribute('aria-label', modo === 'mes' ? 'Próximo mês' : 'Próxima semana');
+    $('#calModo').textContent = modo === 'mes' ? 'Ver só a semana' : 'Ver o mês inteiro';
+    ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].forEach(l => g.append(el('span', l, 'dia-sem')));
+    if (modo === 'mes') for (let i = 0; i < (dias[0].getDay() + 6) % 7; i++) g.append(el('span'));
+    dias.forEach(d => {
+      const iso = Datas.iso(d), m = minDia[iso] || 0;
+      const b = el('button', d.getDate(), 'dia' + (m ? ' treinou n' + (m >= 60 ? 3 : m >= 30 ? 2 : 1) : '') + (iso === Datas.hoje() ? ' hoje' : '') + (iso === selecionado ? ' sel' : ''));
+      b.type = 'button'; b.disabled = iso > Datas.hoje();
+      b.setAttribute('aria-pressed', iso === selecionado);
+      b.setAttribute('aria-label', d.getDate() + ' de ' + NOMES[d.getMonth()] + (iso === Datas.hoje() ? ', hoje' : '') + (m ? ', ' + m + ' minutos treinados' : ', sem treino'));
+      b.onclick = () => { selecionado = iso; desenhar(); const s = $('#calGrade .dia.sel'); if (s) s.focus({ preventScroll: true }); };
+      g.append(b);
+    });
   }
 
+  function detalhe() {
+    const box = $('#diaSel'); box.textContent = '';
+    const treinos = Treinos.listar().filter(t => t.data === selecionado), [, m, d] = selecionado.split('-');
+    box.append(el('strong', (selecionado === Datas.hoje() ? 'Hoje, ' : '') + (+d) + ' de ' + NOMES[+m - 1]));
+    if (!treinos.length) box.append(el('p', 'Nenhum treino neste dia.', 'vazio'));
+    else {
+      const ul = el('ul', null, 'lista');
+      treinos.forEach(t => {
+        const li = el('li'), info = el('div'), btn = el('button', 'Apagar');
+        btn.type = 'button'; btn.setAttribute('aria-label', 'Apagar treino de ' + t.tipo);
+        btn.onclick = () => { Treinos.remover(t.id); desenhar(); };
+        info.append(el('strong', t.tipo), el('span', t.min + ' min, ' + t.intensidade.toLowerCase() + (t.obs ? '. ' + t.obs : '')));
+        li.append(info, btn); ul.append(li);
+      });
+      box.append(ul);
+    }
+    const add = el('button', '+ Adicionar treino neste dia', 'btn sec mini'); add.type = 'button';
+    add.onclick = () => {
+      definirData(selecionado);
+      $('#registrar').scrollIntoView({ behavior: reduz() ? 'auto' : 'smooth' });
+      setTimeout(() => $('#gDuracao .chip').focus({ preventScroll: true }), reduz() ? 0 : 400);
+    };
+    box.append(add);
+  }
+
+  function mover(n) {
+    ref = modo === 'mes' ? new Date(ref.getFullYear(), ref.getMonth() + n, 1) : new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + 7 * n);
+    desenhar();
+  }
+  $('#calAnt').onclick = () => mover(-1);
+  $('#calProx').onclick = () => mover(1);
+  $('#calHoje').onclick = () => { ref = new Date(); selecionado = Datas.hoje(); desenhar(); };
+  $('#calModo').onclick = () => { modo = modo === 'mes' ? 'semana' : 'mes'; if (modo === 'semana') ref = dataDe(selecionado); desenhar(); };
+
+  /* ----- Análise da semana ----- */
+  let serie = 'min';
   function analise(minDia) {
     const semana = Datas.semana(), unidade = { min: ' min', agua: ' ml', sono: ' h' }[serie];
     const valor = d => { if (serie === 'min') return minDia[d] || 0; const c = Checkins.doDia(d); return c ? c[serie] : 0; };
@@ -133,14 +248,20 @@ function iniciar(u) {
       col.append(el('em', vals[i] ? fmt(vals[i]) : ''), b, el('span', ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'][i])); box.append(col);
     });
   }
+  $$('#chips .chip').forEach(b => b.onclick = () => {
+    serie = b.dataset.serie;
+    $$('#chips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+    analise(Treinos.minutosPorDia());
+  });
 
   function desenhar() {
     const minDia = Treinos.minutosPorDia(), semana = Datas.semana(), dias = semana.filter(d => minDia[d]).length;
-    const min = semana.reduce((s, d) => s + (minDia[d] || 0), 0), pct = Math.round(dias / meta * 100);
-    $('#saudTxt').textContent = dias >= meta ? 'Meta da semana cumprida. Descanse e se hidrate.' : 'Você treinou ' + dias + ' de ' + meta + ' dias nesta semana.';
+    const min = semana.reduce((s, d) => s + (minDia[d] || 0), 0), pct = Math.round(dias / meta * 100), faltam = meta - dias;
+    $('#saudTxt').textContent = faltam <= 0 ? 'Meta da semana cumprida. Descanse e se hidrate.'
+      : 'Faltam ' + faltam + (faltam === 1 ? ' treino' : ' treinos') + ' para a meta desta semana (' + dias + ' de ' + meta + ').';
     barra('#saudBarra', pct); $('#saudMeta').setAttribute('aria-valuenow', Math.min(100, pct));
 
-    const ck = Checkins.doDia(Datas.hoje()), refAgua = Math.round(u.peso * 35), seq = Treinos.sequencia();
+    const ck = Checkins.doDia(Datas.hoje()), refAgua = Math.round(u.peso * 35), semanas = Treinos.semanasSeguidas(meta);
     $('#mSono').textContent = ck ? fmt(ck.sono) : '-';
     $('#mSonoSub').textContent = ck ? 'h, energia ' + O.energia[ck.energia - 1].toLowerCase() : 'sem check-in hoje';
     barra('#bSono', ck ? ck.sono / 8 * 100 : 0);
@@ -148,9 +269,9 @@ function iniciar(u) {
     $('#mAguaSub').textContent = 'de ' + fmt((refAgua / 1000).toFixed(1)) + ' L';
     barra('#bAgua', ck ? ck.agua / refAgua * 100 : 0);
     $('#mTreinos').textContent = dias + '/' + meta; $('#mTreinosSub').textContent = min + ' min'; barra('#bTreinos', pct);
-    $('#mSeq').textContent = seq; $('#mSeqSub').textContent = 'dias seguidos'; barra('#bSeq', seq / 7 * 100);
+    $('#mSeq').textContent = semanas; $('#mSeqSub').textContent = semanas === 1 ? 'semana cumprindo a meta' : 'semanas cumprindo a meta'; barra('#bSeq', semanas / 4 * 100);
 
-    calendario(minDia); analise(minDia);
+    calendario(minDia); detalhe(); atualizarRepetir(); analise(minDia);
 
     const ul = $('#lista'); ul.textContent = '';
     const recentes = [...Treinos.listar()].sort((a, b) => b.data.localeCompare(a.data) || b.id - a.id).slice(0, 6);
@@ -163,26 +284,6 @@ function iniciar(u) {
       li.append(info, btn); ul.append(li);
     });
   }
-
-  $('#calAnt').onclick = () => { mes.setMonth(mes.getMonth() - 1); desenhar(); };
-  $('#calProx').onclick = () => { mes.setMonth(mes.getMonth() + 1); desenhar(); };
-  $$('#chips .chip').forEach(b => b.onclick = () => {
-    serie = b.dataset.serie;
-    $$('#chips .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
-    analise(Treinos.minutosPorDia());
-  });
-
-  $('#formTreino').onsubmit = e => {
-    e.preventDefault();
-    const tipo = $('#tTipo').value.trim(), data = $('#tData').value, min = +$('#tMin').value, erro = $('#erroTreino');
-    if (!tipo) { erro.textContent = 'Diga o que você treinou.'; $('#tTipo').focus(); return; }
-    if (!data || data > Datas.hoje()) { erro.textContent = 'Escolha uma data de hoje ou anterior.'; $('#tData').focus(); return; }
-    if (!min || min < 5 || min > 600) { erro.textContent = 'Informe a duração entre 5 e 600 minutos.'; $('#tMin').focus(); return; }
-    if (!Treinos.adicionar({ tipo, data, min, intensidade: $('#tInt').value, obs: $('#tObs').value.trim() })) { erro.textContent = 'Não foi possível salvar no navegador.'; return; }
-    erro.textContent = '';
-    $('#tTipo').value = $('#tMin').value = $('#tObs').value = ''; $('#tTipo').focus();
-    desenhar();
-  };
 
   desenhar();
 }
