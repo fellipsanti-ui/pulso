@@ -9,26 +9,19 @@ const CONFIG = {
   idadeMinima: 14,
   paginas: { login: 'pag1.html', painel: 'pag2.html', saude: 'pag3.html' },
   chaves: { usuarios: 'pulso_usuarios', sessao: 'pulso_sessao', treinos: 'pulso_treinos', checkins: 'pulso_checkins', medidas: 'pulso_medidas', tema: 'pulso_tema' },
-  menu:  [
-    ['pag2.html', 'Painel', '📊'], 
-    ['pag4.html', 'Recuperação', '🌙'], 
-    ['pag5.html', 'Evolução', '📈'], 
-    ['pag3.html', 'Minha saúde', '❤️'],
-    ['pag6.html', 'Ajustes', '⚙️']
-  ],
+  menu: [['pag2.html', 'Painel', '📊'], ['pag4.html', 'Recuperação', '🌙'], ['pag5.html', 'Evolução', '📈'], ['pag3.html', 'Minha saúde', '❤️']],
   condicoesRisco: ['Problema cardíaco', 'Pressão alta'],
   // Aplicativo instalável: o service worker só liga em https (ou aqui, se serviceWorkerEmLocalhost for true).
   // Deixe false enquanto edita o site, para o navegador não guardar arquivos antigos.
   app: { serviceWorkerEmLocalhost: false },
 
-  // As imagens atuais são ilustrações. Para usar fotos ou vídeos, troque o caminho em src.
   // Fotos e vídeos do site: coloque o arquivo em img/ ou video/ e escreva o caminho em src (ex.: 'img/banner.jpg').
   // Com src vazio aparece um espaço reservado. mostrarVazios: false esconde os espaços ainda vazios.
   midias: {
     mostrarVazios: true,
-    'login-hero': { src: 'img/login-corrida.svg', legenda: 'Pessoa correndo numa pista ao nascer do sol' },
-    'painel-banner': { src: 'img/painel-banner.svg', legenda: 'Colinas verdes com o batimento cardíaco' },
-    'recuperacao-video': { src: 'img/recuperacao-alongamento.svg', poster: '', legenda: 'Pessoa se alongando em casa' }
+    'login-hero': { src: '', legenda: 'Foto ou vídeo de abertura' },
+    'painel-banner': { src: '', legenda: 'Foto do banner' },
+    'recuperacao-video': { src: '', poster: '', legenda: 'Vídeo de alongamento ou respiração' }
   },
   opcoes: {
     sexos: ['Feminino', 'Masculino', 'Prefiro não informar'],

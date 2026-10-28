@@ -1,289 +1,174 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-tema="claro">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pulso – Configurações</title>
-  <link rel="stylesheet" href="css/estilo.css">
-  <meta name="theme-color" content="#F1F0EC">
-  <style>
-    /* Estilos adicionais para o Tour Interativo por Abas */
-    .modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: grid; place-items: center;
-      z-index: 100; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-    .modal-backdrop.show {
-      opacity: 1; pointer-events: auto;
-    }
-    .modal-conteudo {
-      background: var(--surface);
-      border-radius: var(--r-lg);
-      padding: 24px;
-      width: min(92%, 560px);
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: var(--sombra);
-      transform: translateY(20px);
-      transition: transform 0.25s ease;
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-backdrop.show .modal-conteudo {
-      transform: translateY(0);
-    }
-    
-    /* Grid de navegação das páginas dentro do Tour */
-    .tour-nav {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      margin: 14px 0;
-    }
-    @media (min-width: 480px) {
-      .tour-nav {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-    .tour-btn {
-      background: var(--tab-bg);
-      border: 0;
-      padding: 10px 4px;
-      font: 600 0.85rem var(--text);
-      color: var(--muted);
-      cursor: pointer;
-      border-radius: var(--r);
-      text-align: center;
-      transition: all 0.2s;
-    }
-    .tour-btn[aria-selected="true"] {
-      background: var(--accent);
-      color: var(--on-accent);
-    }
-
-    /* Painéis de conteúdo do Tour */
-    .tour-painel {
-      display: none;
-      background: var(--bg);
-      border-radius: var(--r);
-      padding: 16px;
-      margin-bottom: 16px;
-      animation: fadeIn 0.2s ease-in-out;
-    }
-    .tour-painel.active {
-      display: block;
-    }
-    .tour-painel h3 {
-      margin: 0 0 6px 0;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tour-painel ul {
-      margin: 10px 0 0 0;
-      padding-left: 20px;
-    }
-    .tour-painel li {
-      margin-bottom: 8px;
-      font-size: 0.9rem;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.98); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F1F0EC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pulso">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Pulso – Configurações</title>
+<link rel="stylesheet" href="css/estilo.css">
+<script>try{document.documentElement.dataset.tema=JSON.parse(localStorage.getItem('pulso_tema')||'null')||(matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro')}catch(e){}</script>
 </head>
 <body>
+<header id="topo"></header>
+<main class="pagina configuracoes">
+  <h1>Configurações</h1>
+  <p class="sub">Gerencie sua conta, segurança e a forma como você usa o Pulso.</p>
 
-  <header id="topo"></header>
-
-  <main class="pagina">
-    <header class="saudacao">
-      <div>
-        <h1>Configurações</h1>
-        <p class="sub">Personalize a sua experiência no aplicativo.</p>
-      </div>
-    </header>
-
-    <!-- Bloco 1: Preferências Visuais -->
-    <section class="bloco">
-      <h2>Visual e Tema</h2>
-      <p class="hint">Alterne a paleta de cores para maior conforto visual.</p>
-      <div class="field" style="margin-top: 14px;">
-        <div id="container-botao-tema"></div>
-      </div>
-    </section>
-
-    <!-- Bloco 2: Dicas e Apresentação das Páginas -->
-    <section class="bloco">
-      <h2>Apoio e Aprendizado</h2>
-      <p class="hint">Explore as funcionalidades e regras de cada tela do Pulso.</p>
-      <div style="margin-top: 16px;">
-        <button type="button" class="btn sec" id="btn-ajuda" style="width: auto; display: inline-flex; align-items: center; gap: 8px;">
-          ⚙️ Dicas e Apresentação
-        </button>
-      </div>
-    </section>
-
-    <!-- Bloco 3: Sobre o Aplicativo -->
-    <section class="bloco">
-      <h2>Sobre o Pulso</h2>
-      <p class="hint">Informações técnicas do protótipo PWA.</p>
-      <ul class="lista">
-        <li>
-          <div>
-            <strong>Versão do Sistema</strong>
-            <span>v3.2.0 — Laranja Tangerina</span>
-          </div>
-        </li>
-        <li>
-          <div>
-            <strong>Armazenamento Local</strong>
-            <span>Os dados estão salvos de forma segura apenas neste navegador.</span>
-          </div>
-        </li>
-      </ul>
-    </section>
-
-    <!-- Bloco 4: Zona de Perigo -->
-    <section class="bloco" style="border: 1.5px solid var(--danger); background: rgba(179, 38, 30, 0.03);">
-      <h2 style="color: var(--danger);">Zona de Perigo</h2>
-      <p class="hint">Ações irreversíveis sobre a sua conta local.</p>
-      
-      <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
-        <button type="button" class="btn perigo" id="btn-limpar-dados">Limpar Histórico de Treinos</button>
-        <button type="button" class="btn perigo" id="btn-apagar-conta" style="background: var(--danger); color: white;">Apagar Minha Conta Permanentemente</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- Janela Modal do Tour do Aplicativo -->
-  <div class="modal-backdrop" id="modal-ajuda">
-    <div class="modal-conteudo">
-      <h2>Apresentação do Pulso 🚀</h2>
-      <p class="hint">Selecione uma das telas abaixo para entender suas funções e regras:</p>
-      
-      <!-- Menu de abas das páginas -->
-      <nav class="tour-nav" role="tablist">
-        <button class="tour-btn" role="tab" aria-selected="true" data-target="painel">📊 Painel</button>
-        <button class="tour-btn" role="tab" aria-selected="false" data-target="recuperacao">🌙 Recuperação</button>
-        <button class="tour-btn" role="tab" aria-selected="false" data-target="evolucao">📈 Evolução</button>
-        <button class="tour-btn" role="tab" aria-selected="false" data-target="saude">❤️ Saúde</button>
-      </nav>
-
-      <!-- Conteúdo de cada página -->
-      <div id="painel" class="tour-painel active">
-        <h3>📊 Página 2: Painel Principal</h3>
-        <p class="hint">Sua central diária de comando e acompanhamento de constância.</p>
-        <ul>
-          <li><strong>Registro de Treino:</strong> Salva o esporte, data, tempo de duração e intensidade do esforço.</li>
-          <li><strong>Cálculo de Sequência (Streak):</strong> Monitora quantos dias seguidos você treinou. Se você quebrar o ritmo por mais de um dia, o contador zera!</li>
-          <li><strong>Resumo Rápido:</strong> Mostra na hora os dados consolidados do seu último check-in de sono, consumo de água e os minutos totais de treino da semana.</li>
-        </ul>
-      </div>
-
-      <div id="recuperacao" class="tour-painel">
-        <h3>🌙 Página 4: Saúde e Recuperação</h3>
-        <p class="hint">Focada no equilíbrio fisiológico para evitar o overtraining.</p>
-        <ul>
-          <li><strong>Check-in Diário:</strong> Registra variáveis fundamentais como horas de sono dormidas na noite anterior e volume total de água ingerida.</li>
-          <li><strong>Escalas Subjetivas:</strong> Avalia seus níveis de energia e dor muscular de forma preventiva.</li>
-          <li><strong>Dia de Descanso:</strong> Permite marcar taxas sem atividade física para validar que a pausa planejada faz parte da sua rotina de ganhos.</li>
-        </ul>
-      </div>
-
-      <div id="evolucao" class="tour-painel">
-        <h3>📈 Página 5: Evolução e Desempenho</h3>
-        <p class="hint">Geração de relatórios analíticos de longo prazo.</p>
-        <ul>
-          <li><strong>Histórico Cronológico:</strong> Centraliza a listagem completa de todas as sessões de exercícios feitas desde a abertura da sua conta.</li>
-          <li><strong>Gráficos de Peso e Medidas:</strong> Exibe linhas temporais de oscilação do peso e da circunferência da cintura. É necessário cadastrar ao menos duas medidas para liberar os gráficos.</li>
-          <li><strong>Comparativos de Período:</strong> Calcula se o seu volume de minutos na semana ou mês atual está maior ou menor do que nos períodos passados.</li>
-        </ul>
-      </div>
-
-      <div id="saude" class="tour-painel">
-        <h3>❤️ Página 3: Minha Saúde</h3>
-        <p class="hint">Avaliação do seu estado antropométrico e zonas biológicas.</p>
-        <ul>
-          <li><strong>Cálculo do IMC:</strong> Avalia seu Índice de Massa Corporal dinamicamente cruzando os dados do seu peso mais recente e sua altura.</li>
-          <li><strong>Zonas Cardíacas (Tanaka):</strong> Aplica a fórmula matemática 208 - (0.7 × idade) para definir a sua frequência cardíaca máxima e segmentar suas 5 zonas de treino (da recuperação ao esforço máximo).</li>
-          <li><strong>Anamnese de Segurança:</strong> Armazena o questionário PAR-Q. Se houver alertas médicos ou doenças crônicas ativas, o sistema exibe avisos para você buscar validação médica profissional.</li>
-        </ul>
-      </div>
-
-      <button type="button" class="btn" id="btn-fechar-ajuda">Fechar Apresentação</button>
+  <section class="bloco dicas-destaque" aria-labelledby="tituloDicas">
+    <div class="dicas-icone" aria-hidden="true">💡</div>
+    <div class="dicas-conteudo">
+      <h2 id="tituloDicas">Dicas — aprenda a usar o Pulso</h2>
+      <p>Conheça as páginas, entenda para que serve cada função e veja onde encontrar cada recurso. Você pode avançar e voltar pelas explicações quando quiser.</p>
+      <button class="btn" id="iniciarTour" type="button">✨ Mostrar como o site funciona</button>
     </div>
-  </div>
+  </section>
 
-  <!-- Scripts do App -->
-  <script src="js/app.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Controle de sessão e renderização da barra do topo
-      const usuario = Conta.exigirLogin();
-      if (!usuario) return;
-      montarTopo();
+  <section class="bloco" aria-labelledby="tituloConta">
+    <h2 id="tituloConta">E-mail da conta</h2>
+    <p class="sub">Use um endereço ao qual você tenha acesso. A alteração será salva neste navegador.</p>
+    <form id="formEmail" novalidate>
+      <div class="field"><label for="emailAtual">E-mail atual</label><input id="emailAtual" type="email" autocomplete="email" readonly></div>
+      <div class="field"><label for="novoEmail">Novo e-mail</label><input id="novoEmail" type="email" autocomplete="email" placeholder="voce@exemplo.com" required></div>
+      <p class="mensagem-config" id="msgEmail" role="status" aria-live="polite"></p>
+      <button class="btn" type="submit">Salvar novo e-mail</button>
+    </form>
+  </section>
 
-      // 2. Renderização do botão de tema claro/escuro nativo
-      const containerTema = $('#container-botao-tema');
-      if (containerTema) {
-        const btn = botaoTema('mini');
-        btn.style.width = 'auto';
-        btn.style.display = 'flex';
-        btn.style.gap = '8px';
-        btn.style.alignItems = 'center';
-        btn.style.padding = '10px 20px';
-        btn.style.borderRadius = 'var(--pill)';
-        const textoBotao = document.createTextNode(' Alternar Modo Escuro / Claro');
-        btn.appendChild(textoBotao);
-        containerTema.appendChild(btn);
-      }
+  <section class="bloco" aria-labelledby="tituloSeguranca">
+    <h2 id="tituloSeguranca">Segurança e senha</h2>
+    <p class="sub">Troque sua senha periodicamente e não compartilhe seus dados de acesso.</p>
+    <form id="formSenha" novalidate>
+      <div class="field"><label for="senhaAtual">Senha atual</label><input id="senhaAtual" type="password" autocomplete="current-password" required></div>
+      <div class="field"><label for="senhaNova">Nova senha</label><input id="senhaNova" type="password" autocomplete="new-password" minlength="8" required><p class="nota">Use pelo menos 8 caracteres.</p></div>
+      <div class="field"><label for="senhaConfirmar">Confirmar nova senha</label><input id="senhaConfirmar" type="password" autocomplete="new-password" minlength="8" required></div>
+      <p class="mensagem-config" id="msgSenha" role="status" aria-live="polite"></p>
+      <button class="btn" type="submit">Atualizar senha</button>
+    </form>
+    <div class="aviso config-aviso"><strong>Importante:</strong> este projeto é um protótipo. Os dados ficam salvos no armazenamento local do navegador; a alteração de e-mail não envia confirmação e não existe recuperação de senha por e-mail.</div>
+  </section>
 
-      // 3. Controle Geral da Janela Modal (Abrir e Fechar)
-      const modal = $('#modal-ajuda');
-      $('#btn-ajuda').onclick = () => modal.classList.add('show');
-      $('#btn-fechar-ajuda').onclick = () => modal.classList.remove('show');
-      modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+  <section class="bloco" aria-labelledby="tituloAcessibilidade">
+    <h2 id="tituloAcessibilidade">Acessibilidade</h2>
+    <p class="sub">Personalize a leitura e a navegação. As preferências ficam salvas neste navegador.</p>
+    <div class="field"><label for="tamanhoFonte">Tamanho do texto</label>
+      <select id="tamanhoFonte">
+        <option value="normal">Padrão</option><option value="grande">Grande</option><option value="maior">Muito grande</option>
+      </select>
+    </div>
+    <label class="opcao-acessibilidade"><input type="checkbox" id="altoContraste"> <span><strong>Alto contraste</strong><small>Aumenta a diferença entre o texto, o fundo e os elementos.</small></span></label>
+    <label class="opcao-acessibilidade"><input type="checkbox" id="sublinharLinks"> <span><strong>Sublinhar links</strong><small>Ajuda a identificar links nas páginas.</small></span></label>
+    <label class="opcao-acessibilidade"><input type="checkbox" id="reduzirMovimento"> <span><strong>Reduzir animações</strong><small>Reduz transições e movimentos decorativos.</small></span></label>
+    <p class="mensagem-config" id="msgAcessibilidade" role="status" aria-live="polite"></p>
+    <button class="btn sec" id="salvarAcessibilidade" type="button">Salvar preferências de acessibilidade</button>
+    <button class="btn sec" id="restaurarAcessibilidade" type="button" style="margin-top:10px">Restaurar padrão</button>
+  </section>
 
-      // 4. Lógica de Alternância das Abas do Tour Apresentação
-      const botoesTour = $$('.tour-btn');
-      const paineisTour = $$('.tour-painel');
+  <section class="bloco" aria-labelledby="tituloUso">
+    <h2 id="tituloUso">Preferências de uso</h2>
+    <div class="preferencia-linha"><div><strong>Aparência</strong><p class="nota">Alterne entre o tema claro e escuro pelo botão de lua/sol no topo.</p></div><span aria-hidden="true">🌗</span></div>
+    <div class="preferencia-linha"><div><strong>Ajuda e explicações</strong><p class="nota">Abra “Dicas” nesta página sempre que quiser relembrar como uma função funciona.</p></div><button class="btn sec mini" id="abrirDicasSecao" type="button">Ver dicas</button></div>
+  </section>
+</main>
 
-      botoesTour.forEach(botao => {
-        botao.onclick = () => {
-          botoesTour.forEach(b => b.setAttribute('aria-selected', 'false'));
-          paineisTour.forEach(p => p.classList.remove('active'));
+<div class="tour-fundo" id="tourFundo" hidden>
+  <section class="tour-caixa" role="dialog" aria-modal="true" aria-labelledby="tourTitulo" aria-describedby="tourDescricao">
+    <div class="tour-topo"><span id="tourContador">Dicas do Pulso</span><button class="tour-fechar" id="fecharTour" type="button" aria-label="Fechar dicas">✕</button></div>
+    <div class="tour-progresso" aria-hidden="true"><span id="tourBarra"></span></div>
+    <div class="tour-simbolo" id="tourIcone" aria-hidden="true">👋</div>
+    <h2 id="tourTitulo">Bem-vindo ao Pulso!</h2>
+    <p id="tourDescricao">Vamos conhecer as funções do site.</p>
+    <div class="tour-dica" id="tourExemplo"></div>
+    <a class="btn sec tour-link" id="tourLink" href="pag2.html">Abrir esta página</a>
+    <div class="tour-acoes"><button class="btn sec" id="tourAnterior" type="button">Voltar</button><button class="btn" id="tourProximo" type="button">Próxima dica</button></div>
+    <p class="nota">Você pode fechar as dicas a qualquer momento e abri-las novamente nas Configurações.</p>
+  </section>
+</div>
 
-          botao.setAttribute('aria-selected', 'true');
-          const alvoId = botao.dataset.target;
-          $('#' + alvoId).classList.add('active');
-        };
-      });
+<script src="js/app.js"></script>
+<script>
+const usuario = Conta.exigirLogin();
+if (usuario) iniciarConfiguracoes(usuario);
 
-      // 5. Ação: Limpar os dados de treinos
-      $('#btn-limpar-dados').onclick = () => {
-        if (confirm('Tem certeza de que deseja apagar todos os seus treinos registrados? Essa ação não pode ser desfeita.')) {
-          const t = Store.ler(CONFIG.chaves.treinos, {});
-          t[usuario.email] = [];
-          if (Store.gravar(CONFIG.chaves.treinos, t)) {
-            alert('Histórico de treinos limpo com sucesso!');
-            location.reload();
-          }
-        }
-      };
+function iniciarConfiguracoes(usuario) {
+  montarTopo();
+  $('#emailAtual').value = usuario.email || '';
 
-      // 6. Ação: Exclusão completa da Conta
-      $('#btn-apagar-conta').onclick = () => {
-        if (confirm('ATENÇÃO: Deseja realmente apagar sua conta e todos os seus dados de saúde? Esta ação é irreversível.')) {
-          Conta.apagar();
-        }
-      };
-    });
-  </script>
+  function mensagem(id, texto, erro = false) {
+    const campo = $(id); campo.textContent = texto; campo.classList.toggle('erro-config', erro); campo.classList.toggle('sucesso-config', !!texto && !erro);
+  }
+
+  $('#formEmail').addEventListener('submit', async e => {
+    e.preventDefault();
+    const novo = $('#novoEmail').value.trim().toLowerCase();
+    if (!novo) return mensagem('#msgEmail', 'Digite o novo e-mail.', true);
+    const resultado = await Conta.alterarEmail(novo);
+    mensagem('#msgEmail', resultado.mensagem || resultado.erro, !resultado.ok);
+    if (resultado.ok) { $('#emailAtual').value = novo; $('#novoEmail').value = ''; }
+  });
+
+  $('#formSenha').addEventListener('submit', async e => {
+    e.preventDefault();
+    const atual = $('#senhaAtual').value, nova = $('#senhaNova').value, confirmar = $('#senhaConfirmar').value;
+    if (nova !== confirmar) return mensagem('#msgSenha', 'As novas senhas não são iguais.', true);
+    if (nova.length < 8) return mensagem('#msgSenha', 'A nova senha precisa ter pelo menos 8 caracteres.', true);
+    const ok = await Conta.alterarSenha(atual, nova);
+    if (ok === true) {
+      mensagem('#msgSenha', 'Senha atualizada neste navegador.');
+      $('#formSenha').reset();
+    } else mensagem('#msgSenha', ok.erro || 'Não foi possível atualizar a senha.', true);
+  });
+
+  const opcoes = Acessibilidade.ler();
+  $('#tamanhoFonte').value = opcoes.fonte;
+  $('#altoContraste').checked = opcoes.contraste;
+  $('#sublinharLinks').checked = opcoes.sublinharLinks;
+  $('#reduzirMovimento').checked = opcoes.reduzirMovimento;
+  function lerAcessibilidade() {
+    return { fonte: $('#tamanhoFonte').value, contraste: $('#altoContraste').checked, sublinharLinks: $('#sublinharLinks').checked, reduzirMovimento: $('#reduzirMovimento').checked };
+  }
+  $('#salvarAcessibilidade').onclick = () => { Acessibilidade.salvar(lerAcessibilidade()); mensagem('#msgAcessibilidade', 'Preferências de acessibilidade salvas.'); };
+  $('#restaurarAcessibilidade').onclick = () => {
+    $('#tamanhoFonte').value = 'normal'; $('#altoContraste').checked = false; $('#sublinharLinks').checked = false; $('#reduzirMovimento').checked = false;
+    Acessibilidade.salvar(Acessibilidade.padrao); mensagem('#msgAcessibilidade', 'Preferências padrão restauradas.');
+  };
+
+  const dicas = [
+    { icone:'👋', titulo:'Bem-vindo ao Pulso!', descricao:'O Pulso ajuda você a registrar treinos e acompanhar hábitos ligados à saúde esportiva. Use estas dicas como um pequeno tour pelas páginas.', exemplo:'Você pode sair do tour quando quiser e voltar a ele por Configurações → Dicas.', link:'pag2.html', nome:'Ir ao Painel' },
+    { icone:'📊', titulo:'Painel: seu resumo diário', descricao:'O Painel reúne seus indicadores de sono, água, treinos e sequência. Também permite registrar um treino, consultar o calendário e ver os treinos recentes.', exemplo:'Para registrar: preencha o tipo de treino, data, duração e intensidade; depois toque em “Salvar treino”.', link:'pag2.html', nome:'Abrir Painel' },
+    { icone:'🌙', titulo:'Recuperação: como você está hoje', descricao:'A página Recuperação serve para fazer um check-in diário sobre sono, hidratação, energia, dores e esforço/descanso.', exemplo:'Preencha as respostas com sinceridade. Os registros ajudam você a observar padrões ao longo do tempo.', link:'pag4.html', nome:'Abrir Recuperação' },
+    { icone:'📈', titulo:'Evolução: acompanhe seu progresso', descricao:'Em Evolução e desempenho, compare sua atividade da semana e do mês, veja os minutos treinados e registre peso e medidas ao longo do tempo.', exemplo:'O gráfico de peso aparece quando existem pelo menos duas medidas registradas.', link:'pag5.html', nome:'Abrir Evolução' },
+    { icone:'❤️', titulo:'Minha saúde: dados e indicadores', descricao:'A página Minha saúde reúne informações do seu perfil e indicadores gerais, como IMC estimado e zonas de frequência cardíaca.', exemplo:'Esses cálculos são referências gerais e não substituem avaliação de um profissional de saúde.', link:'pag3.html', nome:'Abrir Minha saúde' },
+    { icone:'⚙️', titulo:'Configurações: controle sua conta', descricao:'Aqui você pode alterar o e-mail usado na conta, trocar a senha e ajustar a acessibilidade: tamanho do texto, contraste, sublinhado de links e redução de animações.', exemplo:'Depois de mudar as opções de acessibilidade, toque em “Salvar preferências”. Elas se aplicam às páginas do Pulso neste navegador.', link:'pag6.html', nome:'Voltar às Configurações' },
+    { icone:'🌗', titulo:'Tema claro e escuro', descricao:'O botão de lua ou sol no topo alterna entre tema claro e escuro. A escolha fica salva no navegador.', exemplo:'Escolha o tema que facilite a leitura no ambiente em que você está.', link:'pag6.html', nome:'Entendi' },
+    { icone:'🔐', titulo:'Privacidade e segurança', descricao:'Use uma senha forte e não compartilhe seu acesso. Como esta versão é um protótipo, os dados são guardados localmente no navegador e não sincronizam automaticamente com outros dispositivos.', exemplo:'Se limpar os dados do navegador, os registros locais podem ser perdidos. Uma versão publicada precisaria de um servidor seguro e fluxo de recuperação de conta.', link:'pag6.html', nome:'Concluir dicas' }
+  ];
+  let etapa = 0;
+  const fundo = $('#tourFundo');
+  function desenharDica() {
+    const d = dicas[etapa];
+    $('#tourContador').textContent = `Dica ${etapa + 1} de ${dicas.length}`;
+    $('#tourIcone').textContent = d.icone; $('#tourTitulo').textContent = d.titulo; $('#tourDescricao').textContent = d.descricao;
+    $('#tourExemplo').textContent = d.exemplo; $('#tourLink').href = d.link; $('#tourLink').textContent = d.nome;
+    $('#tourAnterior').disabled = etapa === 0;
+    $('#tourProximo').textContent = etapa === dicas.length - 1 ? 'Finalizar' : 'Próxima dica';
+    $('#tourBarra').style.width = ((etapa + 1) / dicas.length * 100) + '%';
+  }
+  function abrirTour() { etapa = 0; desenharDica(); fundo.hidden = false; document.body.classList.add('tour-aberto'); $('#fecharTour').focus(); }
+  function fecharTour() { fundo.hidden = true; document.body.classList.remove('tour-aberto'); $('#iniciarTour').focus(); }
+  $('#iniciarTour').onclick = abrirTour;
+  $('#abrirDicasSecao').onclick = abrirTour;
+  $('#fecharTour').onclick = fecharTour;
+  $('#tourAnterior').onclick = () => { if (etapa > 0) { etapa--; desenharDica(); } };
+  $('#tourProximo').onclick = () => { if (etapa < dicas.length - 1) { etapa++; desenharDica(); } else fecharTour(); };
+  fundo.addEventListener('click', e => { if (e.target === fundo) fecharTour(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !fundo.hidden) fecharTour(); });
+}
+</script>
 </body>
 </html>
